@@ -1,12 +1,10 @@
 import {model, property} from '@loopback/repository';
 import {TimestampEntity} from './timestamp.model';
-import {Privilege} from './Privilege.model';
 
 @model()
-export class Role extends TimestampEntity {
+export class Privilege extends TimestampEntity {
   @property({
     type: 'string',
-    required: true,
     id: 1,
   })
   id: string;
@@ -19,6 +17,12 @@ export class Role extends TimestampEntity {
 
   @property({
     type: 'string',
+    required: true,
+  })
+  type?: string;
+
+  @property({
+    type: 'string',
   })
   description?: string;
 
@@ -28,19 +32,22 @@ export class Role extends TimestampEntity {
   })
   status?: number;
 
+  @property.array(Privilege)
+  privilege: Privilege[];
+
   // Define well-known properties here
 
   // Indexer property to allow additional data
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [prop: string]: any;
 
-  constructor(data?: Partial<Role>) {
+  constructor(data?: Partial<Privilege>) {
     super(data);
   }
 }
 
-export interface RoleRelations {
+export interface PrivilegeRelations {
   // describe navigational properties here
 }
 
-export type RoleWithRelations = Role & RoleRelations;
+export type PrivilegeWithRelations = Privilege & PrivilegeRelations;

@@ -2,7 +2,7 @@ import {model, property} from '@loopback/repository';
 import {TimestampEntity} from './timestamp.model';
 
 @model()
-export class Poll extends TimestampEntity {
+export class Alternative extends TimestampEntity {
   @property({
     type: 'string',
     id: true,
@@ -13,17 +13,19 @@ export class Poll extends TimestampEntity {
     type: 'string',
     required: true,
   })
-  createdBy: string;
+  postedBy: string;
 
   @property({
     type: 'string',
+    required: true
   })
-  idRole: string;
+  question: string;
 
   @property({
     type: 'string',
+    required: true
   })
-  idOT: string;
+  name: string;
 
   @property({
     type: 'number',
@@ -31,19 +33,26 @@ export class Poll extends TimestampEntity {
   })
   status: number;
 
+  @property({
+    type: 'number',
+    required: true
+  })
+  order: number;
+
+
   // Define well-known properties here
 
   // Indexer property to allow additional data
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [prop: string]: any;
 
-  constructor(data?: Partial<Poll>) {
+  constructor(data?: Partial<Alternative>) {
     super(data);
   }
 }
 
-export interface PollRelations {
+export interface AlternativeRelations {
   // describe navigational properties here
 }
 
-export type PollWithRelations = Poll & PollRelations;
+export type AlternativeWithRelations = Alternative & AlternativeRelations;
