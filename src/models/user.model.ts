@@ -11,8 +11,7 @@ export class User extends TimestampEntity {
   id: string;
 
   @property({
-    type: 'date',
-    required: true,
+    type: 'date'
   })
   birthdate: string;
 
@@ -26,8 +25,7 @@ export class User extends TimestampEntity {
     type: 'string',
     required: true,
   })
-  idCompany: string;
-
+  group: string;
 
   @property({
     type: 'number',
@@ -35,11 +33,24 @@ export class User extends TimestampEntity {
 
   })
   failedAttempts: number;
+
   @property({
-    type: 'number',
+    type: 'string',
     required: true,
   })
-  idRole: number;
+  role: string;
+
+  @property({
+    type: 'string',
+    required: true,
+  })
+  department: string;
+
+  @property({
+    type: 'string',
+    required: true,
+  })
+  charge: string;
 
   @property({
     type: 'string',
@@ -55,18 +66,12 @@ export class User extends TimestampEntity {
 
   @property({
     type: 'string',
-  })
-  profession?: string;
-
-  @property({
-    type: 'string',
     required: true,
   })
   rut: string;
 
   @property({
     type: 'string',
-    required: true,
   })
   secondLastName: string;
 

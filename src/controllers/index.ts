@@ -2,4 +2,13 @@ export * from './ping.controller';
 export * from './recover-password.controller';
 export * from './role.controller';
 export * from './user.controller';
-
+export * from './alternative.controller';
+export * from './answer.controller';
+export * from './commune.controller';
+export * from './customer.controller';
+export * from './department.controller';
+export * from './form.controller';
+export * from './group.controller';
+export * from './privilege.controller';
+export * from './question.controller';
+export * from './region.controller';
