@@ -41,7 +41,7 @@ export class MyUserService implements UserService<User, Credentials> {
     } else if (foundUser.status == 5) {
       throw new HttpErrors.Unauthorized("sign-in.withoutcred");
     } else {
-      const credentialsFound = await this.userRepository.findCredentials(foundUser.id);
+      const credentialsFound = await this.userRepository.findCredentials(foundUser.rut);
       if (!credentialsFound) {
         throw new HttpErrors.Unauthorized("sign-in.withoutcred");
       }

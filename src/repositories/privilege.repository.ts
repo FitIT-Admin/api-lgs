@@ -1,15 +1,13 @@
-import {DefaultCrudRepository} from '@loopback/repository';
-import {Privilege, PrivilegeRelations} from '../models';
+import {SlugRepositoryTitle} from '../lib/slug-repository.title';
+import {Privilege} from '../models';
 import {DbDataSource} from '../datasources';
 import {inject} from '@loopback/core';
 
-export class PrivilegeRepository extends DefaultCrudRepository<
+export class PrivilegeRepository extends SlugRepositoryTitle<
   Privilege,
-  typeof Privilege.prototype.id,
-  PrivilegeRelations
-> {
+  typeof Privilege.prototype.id> {
   constructor(
-    @inject('datasources.') dataSource: DbDataSource,
+    @inject('datasources.db') dataSource: DbDataSource,
   ) {
     super(Privilege, dataSource);
   }

@@ -1,5 +1,5 @@
 import {model, property} from '@loopback/repository';
-import {TimestampEntity} from './timestamp.model';
+import {TimestampEntity} from '../lib/timestamp-entity';
 
 @model()
 export class Commune extends TimestampEntity {

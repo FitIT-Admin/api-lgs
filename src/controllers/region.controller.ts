@@ -1,20 +1,25 @@
+import {authenticate} from '@loopback/authentication';
 import {
   Count,
   CountSchema,
   Filter,
   FilterExcludingWhere,
   repository,
-  Where,
+  Where
 } from '@loopback/repository';
 import {
+  del, get,
+  getModelSchemaRef, param,
+
+
   post,
-  param,
-  get,
-  getModelSchemaRef,
-  patch,
+
+
+
+
   put,
-  del,
-  requestBody,
+
+  requestBody
 } from '@loopback/rest';
 import {Region} from '../models';
 import {RegionRepository} from '../repositories';
@@ -22,8 +27,8 @@ import {RegionRepository} from '../repositories';
 export class RegionController {
   constructor(
     @repository(RegionRepository)
-    public regionRepository : RegionRepository,
-  ) {}
+    public regionRepository: RegionRepository,
+  ) { }
 
   @post('/regions', {
     responses: {
@@ -33,6 +38,7 @@ export class RegionController {
       },
     },
   })
+  @authenticate('jwt')
   async create(
     @requestBody({
       content: {
@@ -57,6 +63,7 @@ export class RegionController {
       },
     },
   })
+  @authenticate('jwt')
   async count(
     @param.where(Region) where?: Where<Region>,
   ): Promise<Count> {
@@ -78,32 +85,11 @@ export class RegionController {
       },
     },
   })
+  @authenticate('jwt')
   async find(
     @param.filter(Region) filter?: Filter<Region>,
   ): Promise<Region[]> {
     return this.regionRepository.find(filter);
-  }
-
-  @patch('/regions', {
-    responses: {
-      '200': {
-        description: 'Region PATCH success count',
-        content: {'application/json': {schema: CountSchema}},
-      },
-    },
-  })
-  async updateAll(
-    @requestBody({
-      content: {
-        'application/json': {
-          schema: getModelSchemaRef(Region, {partial: true}),
-        },
-      },
-    })
-    region: Region,
-    @param.where(Region) where?: Where<Region>,
-  ): Promise<Count> {
-    return this.regionRepository.updateAll(region, where);
   }
 
   @get('/regions/{id}', {
@@ -118,32 +104,12 @@ export class RegionController {
       },
     },
   })
+  @authenticate('jwt')
   async findById(
     @param.path.string('id') id: string,
     @param.filter(Region, {exclude: 'where'}) filter?: FilterExcludingWhere<Region>
   ): Promise<Region> {
     return this.regionRepository.findById(id, filter);
-  }
-
-  @patch('/regions/{id}', {
-    responses: {
-      '204': {
-        description: 'Region PATCH success',
-      },
-    },
-  })
-  async updateById(
-    @param.path.string('id') id: string,
-    @requestBody({
-      content: {
-        'application/json': {
-          schema: getModelSchemaRef(Region, {partial: true}),
-        },
-      },
-    })
-    region: Region,
-  ): Promise<void> {
-    await this.regionRepository.updateById(id, region);
   }
 
   @put('/regions/{id}', {
@@ -153,6 +119,7 @@ export class RegionController {
       },
     },
   })
+  @authenticate('jwt')
   async replaceById(
     @param.path.string('id') id: string,
     @requestBody() region: Region,
@@ -167,6 +134,7 @@ export class RegionController {
       },
     },
   })
+  @authenticate('jwt')
   async deleteById(@param.path.string('id') id: string): Promise<void> {
     await this.regionRepository.deleteById(id);
   }

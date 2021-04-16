@@ -14,7 +14,7 @@ export * from './department.repository';
 export * from './form.repository';
 export * from './group.repository';
 export * from './organization.repository';
-export * from './privilege-type.repository';
 export * from './privilege.repository';
 export * from './question.repository';
 export * from './region.repository';
+export * from './country.repository';

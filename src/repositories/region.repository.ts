@@ -9,7 +9,7 @@ export class RegionRepository extends DefaultCrudRepository<
   RegionRelations
 > {
   constructor(
-    @inject('datasources.') dataSource: DbDataSource,
+    @inject('datasources.db') dataSource: DbDataSource,
   ) {
     super(Region, dataSource);
   }

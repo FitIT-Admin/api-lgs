@@ -6,12 +6,15 @@ import {inject} from '@loopback/core';
 import {
   Filter,
   FilterExcludingWhere,
-  repository
+  repository,
+  CountSchema,
+  Count,
+  Where
 } from '@loopback/repository';
 import {
   get,
   getModelSchemaRef,
-
+  del,
 
 
   HttpErrors, param,
@@ -27,8 +30,8 @@ import {
 
   UserServiceBindings
 } from '../keys';
-import {User} from '../models';
-import {AuditActionsRepository, AuditAuthenticationRepository, Credentials, RecoverPasswordRepository, UserRepository} from '../repositories';
+import {Role, User} from '../models';
+import {AuditActionsRepository, AuditAuthenticationRepository, Credentials, RecoverPasswordRepository, UserRepository, RoleRepository} from '../repositories';
 import {EmailManager} from '../services/email.service';
 import {PasswordHasher} from '../services/hash.password.bcryptjs';
 import {registerAuditAction, registerAuditAuth} from '../services/validator';
@@ -51,6 +54,7 @@ export class UserController {
     @repository(UserRepository) public userRepository: UserRepository,
     @repository(AuditAuthenticationRepository) public auditAuthenticationRepository: AuditAuthenticationRepository,
     @repository(AuditActionsRepository) public auditActionsRepository: AuditActionsRepository,
+    @repository(RoleRepository) public roleRepository: RoleRepository,
     @inject(PasswordHasherBindings.PASSWORD_HASHER) public passwordHasher: PasswordHasher,
     @inject(TokenServiceBindings.TOKEN_SERVICE) public jwtService: TokenService,
     @inject(TokenServiceBindings.TOKEN_EXPIRES_IN) private jwtExpiresIn: string,
@@ -68,7 +72,8 @@ export class UserController {
     },
   })
   @authenticate('jwt')
-  async create(
+  async create(@inject(SecurityBindings.USER)
+  currentUserProfile: UserProfile,
     @requestBody({
       content: {
         'application/json': {
@@ -81,6 +86,9 @@ export class UserController {
     })
     user: User,
   ): Promise<User> {
+    const rut = currentUserProfile[securityId];
+    user.createdBy = rut;
+    user.status = 0;
     return this.userRepository.create(user);
   }
 
@@ -99,13 +107,14 @@ export class UserController {
       },
     },
   })
+  @authenticate('jwt')
   async find(
     @param.filter(User) filter?: Filter<User>,
   ): Promise<User[]> {
     return this.userRepository.find(filter);
   }
 
-  @get('/users/{id}', {
+  @get('/users/{rut}', {
     responses: {
       '200': {
         description: 'User model instance',
@@ -119,13 +128,12 @@ export class UserController {
   })
   @authenticate('jwt')
   async findById(
-    @param.path.string('id') id: string,
-    @param.filter(User, {exclude: 'where'}) filter?: FilterExcludingWhere<User>
-  ): Promise<User> {
-    return this.userRepository.findById(id, filter);
+    @param.path.string('rut') rut: string) : Promise<User> {
+    const users = await this.userRepository.find({ where : { rut : rut}});
+    return users[0];
   }
 
-  @put('/users/{id}', {
+  @put('/users/{rut}', {
     responses: {
       '204': {
         description: 'User PUT success',
@@ -134,10 +142,36 @@ export class UserController {
   })
   @authenticate('jwt')
   async replaceById(
-    @param.path.string('id') id: string,
+    @param.path.string('rut') rut: string,
     @requestBody() user: User,
   ): Promise<void> {
-    await this.userRepository.replaceById(id, user);
+    const users = await this.userRepository.find({ where : { rut : rut}});
+    users[0].name = user.name;
+    users[0].lastName = user.lastName;
+    users[0].secondLastName = user.secondLastName;
+    users[0].email = user.email;
+    users[0].phone = user.phone;
+    users[0].nationality = user.nationality;
+    users[0].role = user.role;
+    users[0].status = user.status;
+    await this.userRepository.replaceById(users[0].id, users[0]);
+  }
+
+  @put('/users/status/{rut}/{status}', {
+    responses: {
+      '204': {
+        description: 'User PUT success',
+      },
+    },
+  })
+  @authenticate('jwt')
+  async changeStatus(
+    @param.path.string('rut') rut: string,
+    @param.path.number('status') status: number,
+  ): Promise<void> {
+    const users = await this.userRepository.find({ where : { rut : rut}});
+    users[0].status = status;
+    await this.userRepository.replaceById(users[0].id, users[0]);
   }
 
   @post('/users/authentication', {
@@ -205,6 +239,21 @@ export class UserController {
       throw new HttpErrors.Unauthorized();
     }
 
+  }
+
+  @get('/users/count', {
+    responses: {
+      '200': {
+        description: 'Region model count',
+        content: {'application/json': {schema: CountSchema}},
+      },
+    },
+  })
+  @authenticate('jwt')
+  async count(
+    @param.where(User) where?: Where<User>,
+  ): Promise<Count> {
+    return this.userRepository.count(where);
   }
 
   @get('/users/activate/{hash}', {
@@ -318,5 +367,18 @@ export class UserController {
       );
     }
     return data;
+  }
+
+  @del('/users/{rut}', {
+    responses: {
+      '204': {
+        description: 'User DELETE success',
+      },
+    },
+  })
+  @authenticate('jwt')
+  async deleteById(@param.path.string('rut') rut: string): Promise<void> {
+    const users = await this.userRepository.find({ where : { rut : rut}});
+    await this.userRepository.deleteById(users[0].id);
   }
 }

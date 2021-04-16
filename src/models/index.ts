@@ -14,7 +14,7 @@ export * from './customer.model';
 export * from './department.model';
 export * from './group.model';
 export * from './organization.model';
-export * from './privilege-type.model';
 export * from './privilege.model';
 export * from './question.model';
 export * from './region.model';
+export * from './country.model';

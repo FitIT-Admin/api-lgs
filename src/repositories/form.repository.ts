@@ -9,7 +9,7 @@ export class FormRepository extends DefaultCrudRepository<
   FormRelations
 > {
   constructor(
-    @inject('datasources.') dataSource: DbDataSource,
+    @inject('datasources.db') dataSource: DbDataSource,
   ) {
     super(Form, dataSource);
   }

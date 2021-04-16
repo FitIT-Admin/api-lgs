@@ -1,8 +1,8 @@
 import {model, property} from '@loopback/repository';
-import {TimestampEntity} from './timestamp.model';
+import {SlugEntityTitle} from '../lib/slug-entity-title';
 
 @model()
-export class Department extends TimestampEntity {
+export class Department  extends SlugEntityTitle  {
   @property({
     type: 'string',
     id: 1,

@@ -26,7 +26,7 @@ const CredentialsSchema: SchemaObject = {
     },
     password: {
       type: 'string',
-      minLength: 8,
+      minLength: 4,
     },
   },
 };
