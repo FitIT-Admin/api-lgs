@@ -9,7 +9,7 @@ export class CommuneRepository extends DefaultCrudRepository<
   CommuneRelations
 > {
   constructor(
-    @inject('datasources.') dataSource: DbDataSource,
+    @inject('datasources.db') dataSource: DbDataSource,
   ) {
     super(Commune, dataSource);
   }

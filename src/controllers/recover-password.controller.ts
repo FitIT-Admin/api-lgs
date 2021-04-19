@@ -74,15 +74,6 @@ export class RecoverPasswordController {
       throw new HttpErrors.Conflict('sign-in.dntexist');
     }
 
-    if (userExists[0].status == 5) {
-      return {
-        user: userExists[0].id,
-        name: userExists[0].name,
-        lastName: userExists[0].lastName,
-        status: 5
-      };
-    }
-
     if (userExists[0].status == 0) {
       throw new HttpErrors.Unauthorized("sign-in.activation_required");
     }
@@ -122,6 +113,34 @@ export class RecoverPasswordController {
         status: 1
       }
     }
+  }
+
+  @get('/recover-passwords/check-activate/{rut}', {
+    responses: {
+      '200': {
+        description: 'Array of Currency model instances',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'array',
+              items: getModelSchemaRef(RecoverPassword, {includeRelations: true}),
+            },
+          },
+        },
+      },
+    },
+  })
+  async checkActivate(@param.path.string('rut') rut: string,
+  ): Promise<Boolean> {
+    const userExists = await this.userRepository.find({where: {rut: rut}});
+    if (userExists.length == 0) {
+      throw new HttpErrors.Conflict('sign-in.dntexist');
+    }
+
+    if (userExists[0].status == 0) {
+      return true;
+    }
+    return false;
   }
 
   async sendEmail(user: any, token: String) {
@@ -204,11 +223,16 @@ export class RecoverPasswordController {
 
     try {
 
-      const user = await this.userRepository.findById(credentials.rut);
+      const users = await this.userRepository.find( { where : { rut : credentials.rut }});
+      var user = users[0];
       if (user.status == 3) {
         throw new HttpErrors.Unauthorized("sign-in.desactivated");
       }
-      if (user.status == 5) {
+      if (user.status == 0) {
+        const previousCredentials = await this.userCredentialsRepository.find({where: {userId: credentials.rut}});
+        if (previousCredentials.length > 0) {
+          await this.userCredentialsRepository.deleteById(previousCredentials[0].id);
+        }
         // encrypt the password
         const password = await this.passwordHasher.hashPassword(
           credentials.password,

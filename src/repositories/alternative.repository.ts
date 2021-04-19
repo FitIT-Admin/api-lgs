@@ -9,7 +9,7 @@ export class AlternativeRepository extends DefaultCrudRepository<
   AlternativeRelations
 > {
   constructor(
-    @inject('datasources.') dataSource: DbDataSource,
+    @inject('datasources.db') dataSource: DbDataSource,
   ) {
     super(Alternative, dataSource);
   }

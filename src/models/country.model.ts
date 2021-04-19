@@ -1,11 +1,11 @@
 import {model, property} from '@loopback/repository';
-import {TimestampEntity} from './timestamp.model';
+import {TimestampEntity} from '../lib/timestamp-entity';
 
 @model()
-export class PrivilegeType extends TimestampEntity {
+export class Country extends TimestampEntity {
   @property({
     type: 'string',
-    id: 1,
+    id: true,
   })
   id: string;
 
@@ -13,12 +13,13 @@ export class PrivilegeType extends TimestampEntity {
     type: 'string',
     required: true,
   })
-  name: string;
+  code: string;
 
   @property({
     type: 'string',
+    required: true,
   })
-  description?: string;
+  name: string;
 
   // Define well-known properties here
 
@@ -26,13 +27,7 @@ export class PrivilegeType extends TimestampEntity {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [prop: string]: any;
 
-  constructor(data?: Partial<PrivilegeType>) {
+  constructor(data?: Partial<Country>) {
     super(data);
   }
 }
-
-export interface PrivilegeTypeRelations {
-  // describe navigational properties here
-}
-
-export type PrivilegeTypeWithRelations = PrivilegeType & PrivilegeTypeRelations;

@@ -1,5 +1,5 @@
 import {model, property} from '@loopback/repository';
-import {TimestampEntity} from './timestamp.model';
+import {TimestampEntity} from '../lib/timestamp-entity';
 
 @model()
 export class Alternative extends TimestampEntity {
@@ -38,6 +38,11 @@ export class Alternative extends TimestampEntity {
     required: true
   })
   order: number;
+
+  @property({
+    type: 'string',
+  })
+  predecessor: string;
 
 
   // Define well-known properties here

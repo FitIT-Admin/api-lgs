@@ -1,8 +1,8 @@
 import {model, property} from '@loopback/repository';
-import {TimestampEntity} from './timestamp.model';
+import {SlugEntityTitle} from '../lib/slug-entity-title';
 
 @model()
-export class Organization extends TimestampEntity {
+export class Organization extends SlugEntityTitle  {
   @property({
     type: 'string',
     id: 1,
@@ -11,14 +11,28 @@ export class Organization extends TimestampEntity {
 
   @property({
     type: 'string',
-    required: true,
   })
-  name: string;
+  description?: string;
 
   @property({
     type: 'string',
   })
-  description?: string;
+  address?: string;
+
+  @property({
+    type: 'string',
+  })
+  website?: string;
+
+  @property({
+    type: 'string',
+  })
+  phone?: string;
+
+  @property({
+    type: 'string',
+  })
+  email?: string;
 
   @property({
     type: 'number',

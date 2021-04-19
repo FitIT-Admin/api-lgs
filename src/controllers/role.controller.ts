@@ -15,17 +15,23 @@ import {
 
 
   put,
-
+  HttpErrors,
   requestBody
 } from '@loopback/rest';
 import {Role} from '../models';
-import {RoleRepository} from '../repositories';
+import {RoleRepository, UserRepository, PrivilegeRepository} from '../repositories';
+import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
+import {inject} from '@loopback/core';
 
 
 export class RoleController {
   constructor(
     @repository(RoleRepository)
     public roleRepository: RoleRepository,
+    @repository(UserRepository)
+    public userRepository: UserRepository,
+    @repository(PrivilegeRepository)
+    public privilegeRepository: PrivilegeRepository,
   ) { }
 
   @post('/roles', {
@@ -37,7 +43,8 @@ export class RoleController {
     },
   })
   @authenticate('jwt')
-  async create(
+  async create(@inject(SecurityBindings.USER)
+    currentUserProfile: UserProfile,
     @requestBody({
       content: {
         'application/json': {
@@ -50,6 +57,8 @@ export class RoleController {
     })
     role: Omit<Role, 'id'>,
   ): Promise<Role> {
+    const rut = currentUserProfile[securityId];
+    role.createdBy = rut;
     return this.roleRepository.create(role);
   }
 
@@ -90,7 +99,7 @@ export class RoleController {
     return this.roleRepository.find(filter);
   }
 
-  @get('/roles/{id}', {
+  @get('/roles/{slug}', {
     responses: {
       '200': {
         description: 'Role model instance',
@@ -104,13 +113,14 @@ export class RoleController {
   })
   @authenticate('jwt')
   async findById(
-    @param.path.string('id') id: string,
-    @param.filter(Role, {exclude: 'where'}) filter?: FilterExcludingWhere<Role>
-  ): Promise<Role> {
-    return this.roleRepository.findById(id, filter);
+    @param.path.string('slug') slug: string): Promise<Role> {
+    var role = await this.findSlugOrId(slug);
+    const user = await this.userRepository.find({ where : { rut : role.createdBy}});
+    role.createdBy = user[0].name + " " + user[0].lastName  + " " + user[0].secondLastName
+    return role;
   }
 
-  @put('/roles/{id}', {
+  @put('/roles/{slug}', {
     responses: {
       '204': {
         description: 'Role PUT success',
@@ -119,13 +129,18 @@ export class RoleController {
   })
   @authenticate('jwt')
   async replaceById(
-    @param.path.string('id') id: string,
+    @param.path.string('slug') slug: string,
     @requestBody() role: Role,
   ): Promise<void> {
-    await this.roleRepository.replaceById(id, role);
+    const roleTemp = await this.findSlugOrId(slug);
+    roleTemp.description = role.description;
+    roleTemp.title = role.title;
+    roleTemp.status = role.status;
+    roleTemp.privilege = role.privilege;
+    await this.roleRepository.updateById(roleTemp.id, roleTemp);
   }
 
-  @del('/roles/{id}', {
+  @del('/roles/{slug}', {
     responses: {
       '204': {
         description: 'Role DELETE success',
@@ -133,7 +148,23 @@ export class RoleController {
     },
   })
   @authenticate('jwt')
-  async deleteById(@param.path.string('id') id: string): Promise<void> {
-    await this.roleRepository.deleteById(id);
+  async deleteById(@param.path.string('slug') slug: string): Promise<void> {
+    const role = await this.findSlugOrId(slug);
+    const users = await this.userRepository.find({ where : { role : role.slug }});
+    if (users.length > 0){
+      throw new HttpErrors.UnprocessableEntity(`No se puede remover porque existen usuarios asociados a este perfil`);
+    }
+
+    const privileges = await this.privilegeRepository.find({ where : { role : role.slug }});
+    if (privileges.length > 0){
+      throw new HttpErrors.UnprocessableEntity(`No se puede remover porque existen privilegios asociados a este perfil`);
+    }
+    await this.roleRepository.deleteById(role.id);
+  }
+
+  private async findSlugOrId(id: string): Promise<Role> {
+    const role = await this.roleRepository.searchSlug(id);
+    if (role.length > 0) return role[0];
+    return await this.roleRepository.findById(id);
   }
 }

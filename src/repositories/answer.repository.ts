@@ -9,7 +9,7 @@ export class AnswerRepository extends DefaultCrudRepository<
   AnswerRelations
 > {
   constructor(
-    @inject('datasources.') dataSource: DbDataSource,
+    @inject('datasources.db') dataSource: DbDataSource,
   ) {
     super(Answer, dataSource);
   }

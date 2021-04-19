@@ -1,20 +1,25 @@
+import {authenticate} from '@loopback/authentication';
 import {
   Count,
   CountSchema,
   Filter,
   FilterExcludingWhere,
   repository,
-  Where,
+  Where
 } from '@loopback/repository';
 import {
-  post,
-  param,
-  get,
-  getModelSchemaRef,
-  patch,
+  del, get,
+  getModelSchemaRef, param,
+
+
+  patch, post,
+
+
+
+
   put,
-  del,
-  requestBody,
+
+  requestBody
 } from '@loopback/rest';
 import {Commune} from '../models';
 import {CommuneRepository} from '../repositories';
@@ -22,8 +27,8 @@ import {CommuneRepository} from '../repositories';
 export class CommuneController {
   constructor(
     @repository(CommuneRepository)
-    public communeRepository : CommuneRepository,
-  ) {}
+    public communeRepository: CommuneRepository,
+  ) { }
 
   @post('/communes', {
     responses: {
@@ -33,6 +38,7 @@ export class CommuneController {
       },
     },
   })
+  @authenticate('jwt')
   async create(
     @requestBody({
       content: {
@@ -57,6 +63,7 @@ export class CommuneController {
       },
     },
   })
+  @authenticate('jwt')
   async count(
     @param.where(Commune) where?: Where<Commune>,
   ): Promise<Count> {
@@ -78,32 +85,11 @@ export class CommuneController {
       },
     },
   })
+  @authenticate('jwt')
   async find(
     @param.filter(Commune) filter?: Filter<Commune>,
   ): Promise<Commune[]> {
     return this.communeRepository.find(filter);
-  }
-
-  @patch('/communes', {
-    responses: {
-      '200': {
-        description: 'Commune PATCH success count',
-        content: {'application/json': {schema: CountSchema}},
-      },
-    },
-  })
-  async updateAll(
-    @requestBody({
-      content: {
-        'application/json': {
-          schema: getModelSchemaRef(Commune, {partial: true}),
-        },
-      },
-    })
-    commune: Commune,
-    @param.where(Commune) where?: Where<Commune>,
-  ): Promise<Count> {
-    return this.communeRepository.updateAll(commune, where);
   }
 
   @get('/communes/{id}', {
@@ -118,6 +104,7 @@ export class CommuneController {
       },
     },
   })
+  @authenticate('jwt')
   async findById(
     @param.path.string('id') id: string,
     @param.filter(Commune, {exclude: 'where'}) filter?: FilterExcludingWhere<Commune>
@@ -132,6 +119,7 @@ export class CommuneController {
       },
     },
   })
+  @authenticate('jwt')
   async updateById(
     @param.path.string('id') id: string,
     @requestBody({
@@ -153,6 +141,7 @@ export class CommuneController {
       },
     },
   })
+  @authenticate('jwt')
   async replaceById(
     @param.path.string('id') id: string,
     @requestBody() commune: Commune,
@@ -167,6 +156,7 @@ export class CommuneController {
       },
     },
   })
+  @authenticate('jwt')
   async deleteById(@param.path.string('id') id: string): Promise<void> {
     await this.communeRepository.deleteById(id);
   }

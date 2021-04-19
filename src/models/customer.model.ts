@@ -1,19 +1,13 @@
 import {model, property} from '@loopback/repository';
-import {TimestampEntity} from './timestamp.model';
+import {SlugEntityTitle} from '../lib/slug-entity-title';
 
 @model()
-export class Customer extends TimestampEntity {
+export class Customer extends SlugEntityTitle {
   @property({
     type: 'string',
     id: 1,
   })
   id: string;
-
-  @property({
-    type: 'string',
-    required: true,
-  })
-  name: string;
 
   @property({
     type: 'string',
@@ -25,6 +19,11 @@ export class Customer extends TimestampEntity {
     required: true,
   })
   status?: number;
+
+  @property({
+    type: 'string',
+  })
+  createdBy?: string;
 
   // Define well-known properties here
 

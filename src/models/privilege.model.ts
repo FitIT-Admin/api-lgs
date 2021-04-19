@@ -1,8 +1,8 @@
 import {model, property} from '@loopback/repository';
-import {TimestampEntity} from './timestamp.model';
+import {SlugEntityTitle} from '../lib/slug-entity-title';
 
 @model()
-export class Privilege extends TimestampEntity {
+export class Privilege extends SlugEntityTitle {
   @property({
     type: 'string',
     id: 1,
@@ -13,13 +13,12 @@ export class Privilege extends TimestampEntity {
     type: 'string',
     required: true,
   })
-  name: string;
+  page?: string
 
   @property({
     type: 'string',
-    required: true,
   })
-  type?: string;
+  icon?: string
 
   @property({
     type: 'string',
@@ -27,13 +26,22 @@ export class Privilege extends TimestampEntity {
   description?: string;
 
   @property({
-    type: 'number',
+    type: 'boolean',
     required: true,
   })
-  status?: number;
+  canRead: boolean;
 
-  @property.array(Privilege)
-  privilege: Privilege[];
+  @property({
+    type: 'boolean',
+    required: true,
+  })
+  canWrite: boolean;
+
+  @property({
+    type: 'string'
+  })
+  createdBy?: string;
+
 
   // Define well-known properties here
 

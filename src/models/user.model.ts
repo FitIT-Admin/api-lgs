@@ -1,6 +1,6 @@
 import {hasOne, model, property} from '@loopback/repository';
 import {UserCredentials} from '../models';
-import {TimestampEntity} from './timestamp.model';
+import {TimestampEntity} from '../lib/timestamp-entity';
 
 @model()
 export class User extends TimestampEntity {
@@ -11,7 +11,7 @@ export class User extends TimestampEntity {
   id: string;
 
   @property({
-    type: 'date'
+    type: 'string'
   })
   birthdate: string;
 
@@ -23,13 +23,22 @@ export class User extends TimestampEntity {
 
   @property({
     type: 'string',
+  })
+  phone: string;
+
+  @property({
+    type: 'string',
     required: true,
   })
-  group: string;
+  nationality: string;
+
+
+  @property.array(String)
+  group: String[];
+
 
   @property({
     type: 'number',
-    required: true,
 
   })
   failedAttempts: number;
@@ -42,13 +51,11 @@ export class User extends TimestampEntity {
 
   @property({
     type: 'string',
-    required: true,
   })
   department: string;
 
   @property({
     type: 'string',
-    required: true,
   })
   charge: string;
 
@@ -77,9 +84,13 @@ export class User extends TimestampEntity {
 
   @property({
     type: 'number',
-    required: true,
   })
   status: number;
+
+  @property({
+    type: 'string'
+  })
+  createdBy?: string;
 
 
   @hasOne(() => UserCredentials)

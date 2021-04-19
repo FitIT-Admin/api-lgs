@@ -1,13 +1,11 @@
 import {inject} from '@loopback/core';
-import {DefaultCrudRepository} from '@loopback/repository';
+import {SlugRepositoryTitle} from '../lib/slug-repository.title';
 import {DbDataSource} from '../datasources';
-import {Role, RoleRelations} from '../models';
+import {Role} from '../models';
 
-export class RoleRepository extends DefaultCrudRepository<
+export class RoleRepository extends SlugRepositoryTitle<
   Role,
-  typeof Role.prototype.id,
-  RoleRelations
-  > {
+  typeof Role.prototype.id  > {
   constructor(
     @inject('datasources.db') dataSource: DbDataSource,
   ) {

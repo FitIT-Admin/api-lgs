@@ -14,15 +14,23 @@ import {
   patch,
   put,
   del,
+  HttpErrors,
   requestBody,
 } from '@loopback/rest';
 import {Privilege} from '../models';
-import {PrivilegeRepository} from '../repositories';
+import {PrivilegeRepository, RoleRepository, UserRepository} from '../repositories';
+import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
+import {inject} from '@loopback/core';
+import {authenticate} from '@loopback/authentication';
 
 export class PrivilegeController {
   constructor(
+    @repository(RoleRepository)
+    public roleRepository: RoleRepository,
+    @repository(UserRepository)
+    public userRepository: UserRepository,
     @repository(PrivilegeRepository)
-    public privilegeRepository : PrivilegeRepository,
+    public privilegeRepository: PrivilegeRepository,
   ) {}
 
   @post('/privileges', {
@@ -33,7 +41,9 @@ export class PrivilegeController {
       },
     },
   })
-  async create(
+  @authenticate('jwt')
+  async create(@inject(SecurityBindings.USER)
+  currentUserProfile: UserProfile,
     @requestBody({
       content: {
         'application/json': {
@@ -46,6 +56,8 @@ export class PrivilegeController {
     })
     privilege: Omit<Privilege, 'id'>,
   ): Promise<Privilege> {
+    const rut = currentUserProfile[securityId];
+    privilege.createdBy = rut;
     return this.privilegeRepository.create(privilege);
   }
 
@@ -57,6 +69,7 @@ export class PrivilegeController {
       },
     },
   })
+  @authenticate('jwt')
   async count(
     @param.where(Privilege) where?: Where<Privilege>,
   ): Promise<Count> {
@@ -78,35 +91,14 @@ export class PrivilegeController {
       },
     },
   })
+  @authenticate('jwt')
   async find(
     @param.filter(Privilege) filter?: Filter<Privilege>,
   ): Promise<Privilege[]> {
     return this.privilegeRepository.find(filter);
   }
 
-  @patch('/privileges', {
-    responses: {
-      '200': {
-        description: 'Privilege PATCH success count',
-        content: {'application/json': {schema: CountSchema}},
-      },
-    },
-  })
-  async updateAll(
-    @requestBody({
-      content: {
-        'application/json': {
-          schema: getModelSchemaRef(Privilege, {partial: true}),
-        },
-      },
-    })
-    privilege: Privilege,
-    @param.where(Privilege) where?: Where<Privilege>,
-  ): Promise<Count> {
-    return this.privilegeRepository.updateAll(privilege, where);
-  }
-
-  @get('/privileges/{id}', {
+  @get('/privileges/{slug}', {
     responses: {
       '200': {
         description: 'Privilege model instance',
@@ -118,56 +110,55 @@ export class PrivilegeController {
       },
     },
   })
+  @authenticate('jwt')
   async findById(
-    @param.path.string('id') id: string,
-    @param.filter(Privilege, {exclude: 'where'}) filter?: FilterExcludingWhere<Privilege>
-  ): Promise<Privilege> {
-    return this.privilegeRepository.findById(id, filter);
+    @param.path.string('slug') slug: string): Promise<Privilege> {
+    var privilege = await this.findSlugOrId(slug);
+    const user = await this.userRepository.find({ where : { rut : privilege.createdBy}});
+    privilege.createdBy = user[0].name + " " + user[0].lastName  + " " + user[0].secondLastName
+    return privilege;
   }
 
-  @patch('/privileges/{id}', {
-    responses: {
-      '204': {
-        description: 'Privilege PATCH success',
-      },
-    },
-  })
-  async updateById(
-    @param.path.string('id') id: string,
-    @requestBody({
-      content: {
-        'application/json': {
-          schema: getModelSchemaRef(Privilege, {partial: true}),
-        },
-      },
-    })
-    privilege: Privilege,
-  ): Promise<void> {
-    await this.privilegeRepository.updateById(id, privilege);
-  }
-
-  @put('/privileges/{id}', {
+  @put('/privileges/{slug}', {
     responses: {
       '204': {
         description: 'Privilege PUT success',
       },
     },
   })
+  @authenticate('jwt')
   async replaceById(
-    @param.path.string('id') id: string,
+    @param.path.string('slug') slug: string,
     @requestBody() privilege: Privilege,
   ): Promise<void> {
-    await this.privilegeRepository.replaceById(id, privilege);
+    const privilegeTemp = await this.findSlugOrId(slug);
+    privilegeTemp.description = privilege.description;
+    privilegeTemp.title = privilege.title;
+    privilegeTemp.role = privilege.role;
+    privilegeTemp.url = privilege.url;
+    privilegeTemp.icon = privilege.icon;
+    privilegeTemp.canView = privilege.canView;
+    privilegeTemp.canEdit = privilege.canEdit;
+    privilegeTemp.canRemove = privilege.canRemove;
+    await this.privilegeRepository.updateById(privilegeTemp.id, privilegeTemp);
   }
 
-  @del('/privileges/{id}', {
+  @del('/privileges/{slug}', {
     responses: {
       '204': {
         description: 'Privilege DELETE success',
       },
     },
   })
-  async deleteById(@param.path.string('id') id: string): Promise<void> {
-    await this.privilegeRepository.deleteById(id);
+  @authenticate('jwt')
+  async deleteById(@param.path.string('slug') slug: string): Promise<void> {
+    const privilege = await this.findSlugOrId(slug);
+    await this.privilegeRepository.deleteById(privilege.id);
+  }
+
+  private async findSlugOrId(id: string): Promise<Privilege> {
+    const privilege = await this.privilegeRepository.searchSlug(id);
+    if (privilege.length > 0) return privilege[0];
+    return await this.privilegeRepository.findById(id);
   }
 }

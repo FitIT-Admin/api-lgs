@@ -12,3 +12,5 @@ export * from './group.controller';
 export * from './privilege.controller';
 export * from './question.controller';
 export * from './region.controller';
+export * from './organization.controller';
+export * from './charge.controller';
