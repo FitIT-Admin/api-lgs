@@ -18,7 +18,7 @@ import {
   HttpErrors,
   requestBody
 } from '@loopback/rest';
-import {Role, User, Privilege} from '../models';
+import {Role} from '../models';
 import {RoleRepository, UserRepository, PrivilegeRepository} from '../repositories';
 import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
 import {inject} from '@loopback/core';

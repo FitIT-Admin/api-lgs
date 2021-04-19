@@ -1,15 +1,15 @@
 import {SlugRepositoryTitle} from '../lib/slug-repository.title';
-import {Customer, CustomerRelations} from '../models';
+import {Charge, ChargeRelations} from '../models';
 import {DbDataSource} from '../datasources';
 import {inject} from '@loopback/core';
 
-export class CustomerRepository extends SlugRepositoryTitle<
-  Customer,
-  typeof Customer.prototype.id
+export class ChargeRepository extends SlugRepositoryTitle<
+Charge,
+  typeof Charge.prototype.id
 > {
   constructor(
     @inject('datasources.db') dataSource: DbDataSource,
   ) {
-    super(Customer, dataSource);
+    super(Charge, dataSource);
   }
 }

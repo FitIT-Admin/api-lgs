@@ -17,12 +17,6 @@ export class Department  extends SlugEntityTitle  {
 
   @property({
     type: 'string',
-    required: true,
-  })
-  name: string;
-
-  @property({
-    type: 'string',
   })
   description?: string;
 
@@ -31,6 +25,11 @@ export class Department  extends SlugEntityTitle  {
     required: true,
   })
   status?: number;
+
+  @property({
+    type: 'string',
+  })
+  createdBy?: string;
 
   // Define well-known properties here
 

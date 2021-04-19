@@ -46,7 +46,7 @@ export class OrganizationController {
     return this.organizationRepository.find(filter);
   }
 
-  @get('/organizations/{id}', {
+  @get('/organizations/{slug}', {
     responses: {
       '200': {
         description: 'Organization model instance',
@@ -59,9 +59,12 @@ export class OrganizationController {
     },
   })
   async findById(
-    @param.path.string('id') id: string,
-    @param.filter(Organization, {exclude: 'where'}) filter?: FilterExcludingWhere<Organization>
-  ): Promise<Organization> {
-    return this.organizationRepository.findById(id, filter);
+    @param.path.string('slug') slug: string): Promise<Organization> {
+    return this.findSlugOrId(slug);
+  }
+  private async findSlugOrId(id: string): Promise<Organization> {
+    const org = await this.organizationRepository.searchSlug(id);
+    if (org.length > 0) return org[0];
+    return await this.organizationRepository.findById(id);
   }
 }

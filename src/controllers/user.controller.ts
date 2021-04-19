@@ -89,6 +89,7 @@ export class UserController {
     const rut = currentUserProfile[securityId];
     user.createdBy = rut;
     user.status = 0;
+    user.failedAttempts = 0;
     return this.userRepository.create(user);
   }
 
@@ -154,7 +155,10 @@ export class UserController {
     users[0].nationality = user.nationality;
     users[0].role = user.role;
     users[0].status = user.status;
-    await this.userRepository.replaceById(users[0].id, users[0]);
+    users[0].charge = user.charge;
+    users[0].department = user.department;
+    users[0].group = user.group;
+    await this.userRepository.updateById(users[0].id, users[0]);
   }
 
   @put('/users/status/{rut}/{status}', {

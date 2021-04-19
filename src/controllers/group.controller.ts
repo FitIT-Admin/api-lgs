@@ -2,7 +2,6 @@ import {
   Count,
   CountSchema,
   Filter,
-  FilterExcludingWhere,
   repository,
   Where,
 } from '@loopback/repository';
@@ -11,18 +10,23 @@ import {
   param,
   get,
   getModelSchemaRef,
-  patch,
   put,
   del,
   requestBody,
+  HttpErrors
 } from '@loopback/rest';
 import {Group} from '../models';
-import {GroupRepository} from '../repositories';
+import {GroupRepository, UserRepository} from '../repositories';
+import {authenticate} from '@loopback/authentication';
+import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
+import {inject} from '@loopback/core';
 
 export class GroupController {
   constructor(
     @repository(GroupRepository)
     public groupRepository : GroupRepository,
+    @repository(UserRepository)
+    public userRepository : UserRepository,
   ) {}
 
   @post('/groups', {
@@ -33,7 +37,9 @@ export class GroupController {
       },
     },
   })
-  async create(
+  @authenticate('jwt')
+  async create(@inject(SecurityBindings.USER)
+  currentUserProfile: UserProfile,
     @requestBody({
       content: {
         'application/json': {
@@ -46,6 +52,8 @@ export class GroupController {
     })
     group: Omit<Group, 'id'>,
   ): Promise<Group> {
+    const rut = currentUserProfile[securityId];
+    group.createdBy = rut;
     return this.groupRepository.create(group);
   }
 
@@ -57,6 +65,7 @@ export class GroupController {
       },
     },
   })
+  @authenticate('jwt')
   async count(
     @param.where(Group) where?: Where<Group>,
   ): Promise<Count> {
@@ -78,35 +87,14 @@ export class GroupController {
       },
     },
   })
+  @authenticate('jwt')
   async find(
     @param.filter(Group) filter?: Filter<Group>,
   ): Promise<Group[]> {
     return this.groupRepository.find(filter);
   }
 
-  @patch('/groups', {
-    responses: {
-      '200': {
-        description: 'Group PATCH success count',
-        content: {'application/json': {schema: CountSchema}},
-      },
-    },
-  })
-  async updateAll(
-    @requestBody({
-      content: {
-        'application/json': {
-          schema: getModelSchemaRef(Group, {partial: true}),
-        },
-      },
-    })
-    group: Group,
-    @param.where(Group) where?: Where<Group>,
-  ): Promise<Count> {
-    return this.groupRepository.updateAll(group, where);
-  }
-
-  @get('/groups/{id}', {
+  @get('/groups/{slug}', {
     responses: {
       '200': {
         description: 'Group model instance',
@@ -118,56 +106,55 @@ export class GroupController {
       },
     },
   })
+  @authenticate('jwt')
   async findById(
-    @param.path.string('id') id: string,
-    @param.filter(Group, {exclude: 'where'}) filter?: FilterExcludingWhere<Group>
-  ): Promise<Group> {
-    return this.groupRepository.findById(id, filter);
+    @param.path.string('slug') slug: string ): Promise<Group> {
+      var group = await this.findSlugOrId(slug);
+      const user = await this.userRepository.find({ where : { rut : group.createdBy}});
+      group.createdBy = user[0].name + " " + user[0].lastName  + " " + user[0].secondLastName
+      return group;
   }
 
-  @patch('/groups/{id}', {
-    responses: {
-      '204': {
-        description: 'Group PATCH success',
-      },
-    },
-  })
-  async updateById(
-    @param.path.string('id') id: string,
-    @requestBody({
-      content: {
-        'application/json': {
-          schema: getModelSchemaRef(Group, {partial: true}),
-        },
-      },
-    })
-    group: Group,
-  ): Promise<void> {
-    await this.groupRepository.updateById(id, group);
-  }
-
-  @put('/groups/{id}', {
+  @put('/groups/{slug}', {
     responses: {
       '204': {
         description: 'Group PUT success',
       },
     },
   })
+  @authenticate('jwt')
   async replaceById(
-    @param.path.string('id') id: string,
+    @param.path.string('slug') slug: string,
     @requestBody() group: Group,
   ): Promise<void> {
-    await this.groupRepository.replaceById(id, group);
+    const groupTemp = await this.findSlugOrId(slug);
+    groupTemp.description = group.description;
+    groupTemp.title = group.title;
+    groupTemp.status = group.status;
+    groupTemp.organization = groupTemp.organization;
+    await this.groupRepository.updateById(groupTemp.id, groupTemp);
   }
 
-  @del('/groups/{id}', {
+  @del('/groups/{slug}', {
     responses: {
       '204': {
         description: 'Group DELETE success',
       },
     },
   })
-  async deleteById(@param.path.string('id') id: string): Promise<void> {
-    await this.groupRepository.deleteById(id);
+  @authenticate('jwt')
+  async deleteById(@param.path.string('slug') slug: string): Promise<void> {
+    var group = await this.findSlugOrId(slug);
+    const users = await this.userRepository.find({ where : { group : group.slug}})
+    if (users.length > 0){
+      throw new HttpErrors.UnprocessableEntity(`No se puede remover porque existen usuarios asociados a este grupo`);
+    }
+    await this.groupRepository.deleteById(group.id);
+  }
+
+  private async findSlugOrId(id: string): Promise<Group> {
+    const group = await this.groupRepository.searchSlug(id);
+    if (group.length > 0) return group[0];
+    return await this.groupRepository.findById(id);
   }
 }

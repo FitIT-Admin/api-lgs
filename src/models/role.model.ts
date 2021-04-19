@@ -1,5 +1,4 @@
 import {model, property} from '@loopback/repository';
-import {Privilege} from './Privilege.model';
 import {SlugEntityTitle} from '../lib/slug-entity-title';
 
 @model()

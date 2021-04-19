@@ -5,7 +5,7 @@ export * from './recover-password.repository';
 export * from './role.repository';
 export * from './user-credentials.repository';
 export * from './user.repository';
-
+export * from './charge.repository';
 export * from './alternative.repository';
 export * from './answer.repository';
 export * from './commune.repository';

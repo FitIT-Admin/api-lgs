@@ -33,10 +33,9 @@ export class User extends TimestampEntity {
   nationality: string;
 
 
-  @property({
-    type: 'string',
-  })
-  group: string;
+  @property.array(String)
+  group: String[];
+
 
   @property({
     type: 'number',
