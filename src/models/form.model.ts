@@ -1,18 +1,22 @@
 import {model, property} from '@loopback/repository';
-import {TimestampEntity} from '../lib/timestamp-entity';
-import {Question} from './question.model';
+import {SlugEntityTitle} from '../lib/slug-entity-title';
 
 @model()
-export class Form extends TimestampEntity {
+export class Form extends SlugEntityTitle {
   @property({
     type: 'string',
     id: true,
   })
   id: string;
 
+  
   @property({
     type: 'string',
-    required: true,
+  })
+  description?: string;
+
+  @property({
+    type: 'string',
   })
   createdBy: string;
 
@@ -34,7 +38,6 @@ export class Form extends TimestampEntity {
 
   @property({
     type: 'number',
-    required: true,
   })
   
   status: number;
@@ -59,8 +62,6 @@ export class Form extends TimestampEntity {
   })
   deleteAt?: Date;
 
-  @property.array(Question)
-  question: Question[];
   // Define well-known properties here
 
   // Indexer property to allow additional data

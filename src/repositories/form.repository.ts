@@ -1,12 +1,11 @@
-import {DefaultCrudRepository} from '@loopback/repository';
-import {Form, FormRelations} from '../models';
+import {SlugRepositoryTitle} from '../lib/slug-repository.title';
+import {Form} from '../models';
 import {DbDataSource} from '../datasources';
 import {inject} from '@loopback/core';
 
-export class FormRepository extends DefaultCrudRepository<
+export class FormRepository extends SlugRepositoryTitle<
   Form,
-  typeof Form.prototype.id,
-  FormRelations
+  typeof Form.prototype.id
 > {
   constructor(
     @inject('datasources.db') dataSource: DbDataSource,

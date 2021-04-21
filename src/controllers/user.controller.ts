@@ -199,13 +199,29 @@ export class UserController {
   })
   async authentication(
     @requestBody(CredentialsRequestBody) credentials: Credentials,
-  ): Promise<{token: string}> {
+  ): Promise<Object> {
 
-    const user = await this.userService.verifyCredentials(credentials);
-    const userProfile = this.userService.convertToUserProfile(user);
-    const token = await this.jwtService.generateToken(userProfile);
-    await this.auditAuthenticationRepository.create(registerAuditAuth(user.id, 1));
-    return {token};
+    var user = await this.userRepository.findOne({where: {rut: credentials.rut}});
+    if (user){
+      const role = await this.findRoleSlugOrId(user.role);
+      const verifyUser = await this.userService.verifyCredentials(credentials);
+      const userProfile = this.userService.convertToUserProfile(verifyUser);
+      const token = await this.jwtService.generateToken(userProfile);
+      await this.auditAuthenticationRepository.create(registerAuditAuth(verifyUser.id, 1));
+
+      return {
+        rut: user.rut,
+        name: user.name + " " + user.lastName,
+        email: user.email,
+        role: {
+          slug: role.slug,
+          name: role.title
+        },
+        privilege: role.privilege,
+        token: token
+      };
+    }
+    throw new HttpErrors.Unauthorized();    
   }
 
   @get('/users/logged-in', {
@@ -225,18 +241,14 @@ export class UserController {
   @authenticate('jwt')
   async isLoggedIn(@inject(SecurityBindings.USER)
   currentUserProfile: UserProfile,
-  ): Promise<Object> {
+  ): Promise<Boolean> {
 
     try {
       const rut = currentUserProfile[securityId];
       var user = await this.userRepository.findOne({where: {rut: rut}});
       if (user) {
-        var response: IsLoggedIn = {
-          valid: true,
-          profile: user
-        }
-        return response;
-      }
+        return true;
+      } 
       throw new HttpErrors.Unauthorized();
     } catch (ex) {
       console.log(ex);
@@ -384,5 +396,11 @@ export class UserController {
   async deleteById(@param.path.string('rut') rut: string): Promise<void> {
     const users = await this.userRepository.find({ where : { rut : rut}});
     await this.userRepository.deleteById(users[0].id);
+  }
+
+  private async findRoleSlugOrId(id: string): Promise<Role> {
+    const role = await this.roleRepository.searchSlug(id);
+    if (role.length > 0) return role[0];
+    return await this.roleRepository.findById(id);
   }
 }
