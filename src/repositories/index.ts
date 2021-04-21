@@ -18,3 +18,4 @@ export * from './privilege.repository';
 export * from './question.repository';
 export * from './region.repository';
 export * from './country.repository';
+export * from './report-problem.repository';

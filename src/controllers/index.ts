@@ -14,3 +14,4 @@ export * from './question.controller';
 export * from './region.controller';
 export * from './organization.controller';
 export * from './charge.controller';
+export * from './report-problem.controller';

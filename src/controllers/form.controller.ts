@@ -94,7 +94,7 @@ export class FormController {
     return this.formRepository.find(filter);
   }
 
-  @get('/forms/{id}', {
+  @get('/forms/{slug}', {
     responses: {
       '200': {
         description: 'Form model instance',
@@ -109,8 +109,7 @@ export class FormController {
   @authenticate('jwt')
   async findById(
     @param.path.string('slug') slug: string ): Promise<Form> {
-    var form = await this.findSlugOrId(slug);
-    return form;
+    return this.findSlugOrId(slug);
   }
 
   @put('/forms/{slug}', {
@@ -125,7 +124,14 @@ export class FormController {
     @param.path.string('slug') slug: string,
     @requestBody() form: Form,
   ): Promise<void> {
-    await this.formRepository.updateById(slug, form);
+    const formTemp = await this.findSlugOrId(slug);
+    formTemp.title = form.title;
+    formTemp.description = form.description;
+    formTemp.customer = form.customer;
+    formTemp.group = form.group;
+    formTemp.ot = form.ot;
+    formTemp.status = form.status;
+    await this.formRepository.updateById(formTemp.id, formTemp);
   }
 
   @del('/forms/{slug}', {
@@ -137,7 +143,8 @@ export class FormController {
   })
   @authenticate('jwt')
   async deleteById(@param.path.string('slug') slug: string): Promise<void> {
-    await this.formRepository.deleteById(slug);
+    const form = await this.findSlugOrId(slug);
+    await this.formRepository.deleteById(form.id);
   }
 
   private async findSlugOrId(id: string): Promise<Form> {

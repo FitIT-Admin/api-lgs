@@ -19,3 +19,4 @@ export * from './region.model';
 export * from './country.model';
 export * from './charge.model';
 export * from './customer.model';
+export * from './report-problem.model'

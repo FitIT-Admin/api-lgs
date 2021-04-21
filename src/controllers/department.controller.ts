@@ -73,7 +73,7 @@ export class DepartmentController {
   @authenticate('jwt')
   async findById(
     @param.path.string('slug') slug: string): Promise<Department> {
-    return await this.findSlugOrId(slug);
+    return this.findSlugOrId(slug);
   }
 
   private async findSlugOrId(id: string): Promise<Department> {

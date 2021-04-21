@@ -55,7 +55,7 @@ export class CustomerController {
   @authenticate('jwt')
   async findById(
     @param.path.string('slug') slug: string): Promise<Customer> {
-    return await this.findSlugOrId(slug);
+    return this.findSlugOrId(slug);
   }
 
   private async findSlugOrId(id: string): Promise<Customer> {
