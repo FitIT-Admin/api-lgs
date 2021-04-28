@@ -26,7 +26,7 @@ export interface EmailParamater {
 export interface EmailManager<T = Object> {
   sendMail(mailObj: EmailParamater): Promise<T>;
   getHTMLPasswordRecovery(fullname: String, token: String): string;
-  getHTMLRegisterUserEmail(fullnameUser: String, fullnameSupervisor: String): string;
+  getHTMLRegisterUserEmail(fullnameUser: String): string;
   getHTMLAccountActivationSupervisor(fullnameSupervisor: String, fullnameUser: String, token: String): string;
   getHTMLAccountActivatedUser(fullname: string): string;
   getFromAddress(): string;
@@ -58,7 +58,7 @@ export class EmailService {
     return dom.serialize();
   }
 
-  getHTMLRegisterUserEmail(fullnameUser: String, fullnameSupervisor: String): string {
+  getHTMLRegisterUserEmail(fullnameUser: String): string {
     const template = './src/assets/email/register-account.html';
     const jsdom = require('jsdom');
     const {JSDOM} = jsdom;
@@ -67,7 +67,7 @@ export class EmailService {
     const dom = new JSDOM(contents);
     const document = dom.window.document;
     document.querySelector('#fullname').innerHTML = fullnameUser;
-    document.querySelector('#fullnameSupervisor').innerHTML = fullnameSupervisor;
+    document.querySelector('#url').href = process.env.FRONTEND_URL + "/activate-account";
     return dom.serialize();
   }
 

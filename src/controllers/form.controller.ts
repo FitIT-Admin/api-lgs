@@ -2,7 +2,6 @@ import {
   Count,
   CountSchema,
   Filter,
-  FilterExcludingWhere,
   repository,
   Where,
 } from '@loopback/repository';
@@ -11,18 +10,25 @@ import {
   param,
   get,
   getModelSchemaRef,
-  patch,
   put,
   del,
   requestBody,
 } from '@loopback/rest';
 import {Form} from '../models';
-import {FormRepository} from '../repositories';
+import {FormRepository, UserRepository} from '../repositories';
+import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
+import {inject} from '@loopback/core';
+import {authenticate} from '@loopback/authentication';
 
+export class VigencyDate {
+  vigencyAt: Date;
+}
 export class FormController {
   constructor(
     @repository(FormRepository)
     public formRepository : FormRepository,
+    @repository(UserRepository)
+    public userRepository : UserRepository,
   ) {}
 
   @post('/forms', {
@@ -33,7 +39,9 @@ export class FormController {
       },
     },
   })
-  async create(
+  @authenticate('jwt')
+  async create(@inject(SecurityBindings.USER)
+  currentUserProfile: UserProfile,
     @requestBody({
       content: {
         'application/json': {
@@ -46,6 +54,9 @@ export class FormController {
     })
     form: Omit<Form, 'id'>,
   ): Promise<Form> {
+    const rut = currentUserProfile[securityId];
+    form.createdBy = rut;
+    form.status = 0;
     return this.formRepository.create(form);
   }
 
@@ -57,6 +68,7 @@ export class FormController {
       },
     },
   })
+  @authenticate('jwt')
   async count(
     @param.where(Form) where?: Where<Form>,
   ): Promise<Count> {
@@ -78,35 +90,14 @@ export class FormController {
       },
     },
   })
+  @authenticate('jwt')
   async find(
     @param.filter(Form) filter?: Filter<Form>,
   ): Promise<Form[]> {
     return this.formRepository.find(filter);
   }
 
-  @patch('/forms', {
-    responses: {
-      '200': {
-        description: 'Form PATCH success count',
-        content: {'application/json': {schema: CountSchema}},
-      },
-    },
-  })
-  async updateAll(
-    @requestBody({
-      content: {
-        'application/json': {
-          schema: getModelSchemaRef(Form, {partial: true}),
-        },
-      },
-    })
-    form: Form,
-    @param.where(Form) where?: Where<Form>,
-  ): Promise<Count> {
-    return this.formRepository.updateAll(form, where);
-  }
-
-  @get('/forms/{id}', {
+  @get('/forms/{slug}', {
     responses: {
       '200': {
         description: 'Form model instance',
@@ -118,56 +109,123 @@ export class FormController {
       },
     },
   })
+  @authenticate('jwt')
   async findById(
-    @param.path.string('id') id: string,
-    @param.filter(Form, {exclude: 'where'}) filter?: FilterExcludingWhere<Form>
-  ): Promise<Form> {
-    return this.formRepository.findById(id, filter);
+    @param.path.string('slug') slug: string ): Promise<Form> {
+      var form = await this.findSlugOrId(slug);
+      const user = await this.userRepository.find({ where : { rut : form.createdBy}});
+      form.createdBy = user[0].name + " " + user[0].lastName  + " " + user[0].secondLastName
+    return form;
   }
 
-  @patch('/forms/{id}', {
-    responses: {
-      '204': {
-        description: 'Form PATCH success',
-      },
-    },
-  })
-  async updateById(
-    @param.path.string('id') id: string,
-    @requestBody({
-      content: {
-        'application/json': {
-          schema: getModelSchemaRef(Form, {partial: true}),
-        },
-      },
-    })
-    form: Form,
-  ): Promise<void> {
-    await this.formRepository.updateById(id, form);
-  }
-
-  @put('/forms/{id}', {
+  @put('/forms/{slug}', {
     responses: {
       '204': {
         description: 'Form PUT success',
       },
     },
   })
+  @authenticate('jwt')
   async replaceById(
-    @param.path.string('id') id: string,
+    @param.path.string('slug') slug: string,
     @requestBody() form: Form,
   ): Promise<void> {
-    await this.formRepository.replaceById(id, form);
+    const formTemp = await this.findSlugOrId(slug);
+    formTemp.title = form.title;
+    formTemp.description = form.description;
+    formTemp.customer = form.customer;
+    formTemp.group = form.group;
+    formTemp.ot = form.ot;
+    formTemp.questions = form.questions;
+    await this.formRepository.updateById(formTemp.id, formTemp);
   }
 
-  @del('/forms/{id}', {
+  @put('/forms/questions/{slug}', {
+    responses: {
+      '204': {
+        description: 'Form PUT success',
+      },
+    },
+  })
+  @authenticate('jwt')
+  async questions(
+    @param.path.string('slug') slug: string,  @requestBody() questions: {title: string; alternatives: string[]}[],
+  ): Promise<void> {
+    const formTemp = await this.findSlugOrId(slug);
+    formTemp.questions =questions;
+    await this.formRepository.updateById(formTemp.id, formTemp);
+  }
+
+
+  @put('/forms/approve/{slug}', {
+    responses: {
+      '204': {
+        description: 'Form PUT success',
+      },
+    },
+  })
+  @authenticate('jwt')
+  async approve(
+    @param.path.string('slug') slug: string,
+    @requestBody() form: VigencyDate,
+  ): Promise<void> {
+    const formTemp = await this.findSlugOrId(slug);
+    formTemp.publishAt = new Date();
+    formTemp.vigencyAt = form.vigencyAt;
+    formTemp.status = 1;
+    await this.formRepository.updateById(formTemp.id, formTemp);
+  }
+
+  @put('/forms/suspend/{slug}', {
+    responses: {
+      '204': {
+        description: 'Form PUT success',
+      },
+    },
+  })
+  @authenticate('jwt')
+  async suspend(
+    @param.path.string('slug') slug: string
+  ): Promise<void> {
+    const formTemp = await this.findSlugOrId(slug);
+    formTemp.suspendAt = new Date();
+    formTemp.status = 2;
+    await this.formRepository.updateById(formTemp.id, formTemp);
+  }
+
+  @put('/forms/delete/{slug}', {
+    responses: {
+      '204': {
+        description: 'Form PUT success',
+      },
+    },
+  })
+  @authenticate('jwt')
+  async delete(
+    @param.path.string('slug') slug: string
+  ): Promise<void> {
+    const formTemp = await this.findSlugOrId(slug);
+    formTemp.deleteAt = new Date();
+    formTemp.status = 3;
+    await this.formRepository.updateById(formTemp.id, formTemp);
+  }
+
+  @del('/forms/{slug}', {
     responses: {
       '204': {
         description: 'Form DELETE success',
       },
     },
   })
-  async deleteById(@param.path.string('id') id: string): Promise<void> {
-    await this.formRepository.deleteById(id);
+  @authenticate('jwt')
+  async deleteById(@param.path.string('slug') slug: string): Promise<void> {
+    const form = await this.findSlugOrId(slug);
+    await this.formRepository.deleteById(form.id);
+  }
+
+  private async findSlugOrId(id: string): Promise<Form> {
+    const form = await this.formRepository.searchSlug(id);
+    if (form.length > 0) return form[0];
+    return await this.formRepository.findById(id);
   }
 }
