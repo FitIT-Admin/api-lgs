@@ -58,6 +58,7 @@
     "@loopback/rest": "^9.2.1",
     "@loopback/rest-explorer": "^3.2.1",
     "@loopback/service-proxy": "^3.1.1",
+    "@sendgrid/mail": "^7.4.2",
     "@sentry/node": "^5.30.0",
     "@types/nodemailer": "6.4.0",
     "dotenv": "^6.2.0",

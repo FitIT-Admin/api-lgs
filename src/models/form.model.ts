@@ -1,4 +1,4 @@
-import {model, property} from '@loopback/repository';
+import {model, property, Entity} from '@loopback/repository';
 import {SlugEntityTitle} from '../lib/slug-entity-title';
 
 @model()
@@ -22,7 +22,6 @@ export class Form extends SlugEntityTitle {
 
   @property({
     type: 'string',
-    required: true,
   })
   customer: string;
 
@@ -61,6 +60,9 @@ export class Form extends SlugEntityTitle {
     type: 'date',
   })
   deleteAt?: Date;
+
+  @property.array(Object)
+  questions: {title: string; alternatives: string[]}[];
 
   // Define well-known properties here
 

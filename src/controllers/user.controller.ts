@@ -38,9 +38,11 @@ import {registerAuditAction, registerAuditAuth} from '../services/validator';
 import {
   CredentialsRequestBody
 } from './specs/user-controller.specs';
+
 const jwt = require('jsonwebtoken');
 const signAsync = promisify(jwt.sign);
 const verifyAsync = promisify(jwt.verify);
+const sgMail = require('@sendgrid/mail')
 
 export type IsLoggedIn = {
   valid: Boolean;
@@ -90,7 +92,30 @@ export class UserController {
     user.createdBy = rut;
     user.status = 0;
     user.failedAttempts = 0;
-    return this.userRepository.create(user);
+    const created =  this.userRepository.create(user);
+    if (user.email){
+      let fullname = user.name + " " + user.lastName;
+      this.sendRegisteredUserEmail(user.email, fullname);
+    }
+    return created;
+  }
+
+  private async sendRegisteredUserEmail(email : string, fullname : string){
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY)
+      const msg = {
+        to: email, // Change to your recipient
+        from: process.env.SENDGRID_SENDER_FROM, 
+        subject: 'Nielsen Group - Registro de Cuenta',
+        html: this.emailManager.getHTMLRegisterUserEmail(fullname)
+      }
+      sgMail
+        .send(msg)
+        .then(() => {
+          console.log('Email sent')
+        })
+        .catch((error: string) => {
+          console.error(error)
+        })
   }
 
   @get('/users', {

@@ -136,9 +136,26 @@ export class FormController {
     formTemp.customer = form.customer;
     formTemp.group = form.group;
     formTemp.ot = form.ot;
-    formTemp.status = form.status;
+    formTemp.questions = form.questions;
     await this.formRepository.updateById(formTemp.id, formTemp);
   }
+
+  @put('/forms/questions/{slug}', {
+    responses: {
+      '204': {
+        description: 'Form PUT success',
+      },
+    },
+  })
+  @authenticate('jwt')
+  async questions(
+    @param.path.string('slug') slug: string,  @requestBody() questions: {title: string; alternatives: string[]}[],
+  ): Promise<void> {
+    const formTemp = await this.findSlugOrId(slug);
+    formTemp.questions =questions;
+    await this.formRepository.updateById(formTemp.id, formTemp);
+  }
+
 
   @put('/forms/approve/{slug}', {
     responses: {
