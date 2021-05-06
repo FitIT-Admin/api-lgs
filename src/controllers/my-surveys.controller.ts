@@ -11,12 +11,10 @@ import {
   param,
   get,
   getModelSchemaRef,
-  patch,
   put,
-  del,
   requestBody,
 } from '@loopback/rest';
-import {MySurveys} from '../models';
+import {MySurveys, Form} from '../models';
 import {MySurveysRepository, UserRepository, FormRepository} from '../repositories';
 import {authenticate} from '@loopback/authentication';
 import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
@@ -25,6 +23,9 @@ import {EmailManager} from '../services/email.service';
 import {
   EmailManagerBindings
 } from '../keys';
+import {createMySurveyPdf} from '../lib/build_pdf';
+import * as fs from 'fs';
+
 const sgMail = require('@sendgrid/mail')
 
 export class MySurveysController {
@@ -155,7 +156,7 @@ export class MySurveysController {
     survey.confirmationDate = new Date();
     const user = await this.userRepository.findOne({ where : { rut : survey.rut }});
     const form = await this.formRepository.findOne({ where : { slug : survey.form }});
-    if (form && user && user.email){
+    if (form && user && user.email) {
       this.sendPollEmail(user.email, user.name + " " + user.lastName, form.title, form.slug);
     }
     await this.mySurveysRepository.updateById(id, survey);
@@ -177,5 +178,29 @@ export class MySurveysController {
         .catch((error: string) => {
           console.error(error)
         })
+  }
+
+  @get('/my-surveys/pdf/{id}', {
+    responses: {
+      '200': {
+        description: 'My survey pdf',
+        content: {'application/json': {schema: {'x-ts-type': Object}}},
+      },
+    },
+  })
+  async buildPdf(@param.path.string('id') id: string): Promise<Object> {
+    const mySurveys = await this.mySurveysRepository.findById(id);
+    const form = await this.findSlugOrIdForm(mySurveys.form);
+    let nameFile = mySurveys.rut + "_" + form.slug;
+    const file = await createMySurveyPdf(mySurveys, form, nameFile);
+    fs.unlinkSync('./' + nameFile + '.pdf');
+    fs.unlinkSync('./' + nameFile + '.html');
+    return {file: file};
+  }
+
+  private async findSlugOrIdForm(id: string): Promise<Form> {
+    const form = await this.formRepository.searchSlug(id);
+    if (form.length > 0) return form[0];
+    return await this.formRepository.findById(id);
   }
 }

@@ -31,7 +31,7 @@ export class MySurveys extends TimestampEntity {
   longitude: number
 
   @property.array(Object)
-  questions: {title: string; answer: string[]}[];
+  questions: {title: string; answer: any[]}[];
 
   @property({
     type: 'number',
@@ -41,7 +41,7 @@ export class MySurveys extends TimestampEntity {
   @property({
     type: 'date',
   })
-  confirmationDate?: Date;
+  confirmatedAt?: Date;
 
   // Define well-known properties here
 
