@@ -34,7 +34,7 @@ export class User extends TimestampEntity {
 
 
   @property.array(String)
-  group: String[];
+  group: string[];
 
 
   @property({
