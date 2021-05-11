@@ -5,7 +5,6 @@ import {
 import {inject} from '@loopback/core';
 import {
   Filter,
-  FilterExcludingWhere,
   repository,
   CountSchema,
   Count,
@@ -40,8 +39,6 @@ import {
 } from './specs/user-controller.specs';
 
 const jwt = require('jsonwebtoken');
-const signAsync = promisify(jwt.sign);
-const verifyAsync = promisify(jwt.verify);
 const sgMail = require('@sendgrid/mail')
 
 export type IsLoggedIn = {
@@ -111,7 +108,7 @@ export class UserController {
       sgMail
         .send(msg)
         .then(() => {
-          console.log('Email sent')
+          console.log("Successfully sent new account email to: " + fullname + " - " + email);
         })
         .catch((error: string) => {
           console.error(error)
@@ -295,119 +292,6 @@ export class UserController {
     @param.where(User) where?: Where<User>,
   ): Promise<Count> {
     return this.userRepository.count(where);
-  }
-
-  @get('/users/activate/{hash}', {
-    responses: {
-      '200': {
-        content: {
-          'application/json': {
-            schema: {
-              type: 'String'
-            },
-          },
-        },
-      },
-    },
-  })
-  async checkHash(@param.path.string('hash') hash: string): Promise<String> {
-    let decodeHash = {
-      user: "",
-      name: "",
-      date: ""
-    };
-    decodeHash = await this.verifyToken(hash);
-    var recoverPassword = await this.recoverPasswordRepository.find({where: {hash: hash, active: 1, user: decodeHash.user}});
-    var user = await this.userRepository.findById(decodeHash.user);
-
-    if ((recoverPassword.length > 0) && (user.length == 1 && user.status == 0)) {
-      user.status = 1;
-      recoverPassword[0].active = true;
-      await this.userRepository.updateById(user.id, user);
-      await this.recoverPasswordRepository.updateById(recoverPassword[0].id, recoverPassword[0]);
-      if (user.email) {
-        this.sendAccountAtivatedEmail(user.email, user.name + " " + user.lastName);
-      }
-
-      await this.auditActionsRepository.create(registerAuditAction(user.id, "Activacion de cuenta de usuario: " + user.rut));
-      return decodeHash.name.toString();
-    }
-    throw new HttpErrors.Conflict(
-      `sign-in.token_invalid`,
-    );
-  }
-
-  async sendAccountAtivatedEmail(emailUser: string, fullnameUser: string) {
-    const mailOptions = {
-      from: this.emailManager.getFromAddress(),
-      to: emailUser,
-      subject: "Cuenta de Usuario activada",
-      html: this.emailManager.getHTMLAccountActivatedUser(fullnameUser)
-    };
-
-    this.emailManager.sendMail(mailOptions).then(function (res: any) {
-      console.log("Successfully sent: " + mailOptions.subject + " to: " + mailOptions.to);
-      return {message: `Successfully sent register mail to ${emailUser}`};
-    }).catch(function (err: any) {
-      Sentry.captureException(err);
-      console.log(err);
-      throw new HttpErrors.UnprocessableEntity(`Error in sending E-mail to ${emailUser}`);
-    });
-  }
-
-  async generateActivationToken(rut: string, requestedDate: string, name: string, lastName: string): Promise<string> {
-
-    const activationToken = {
-      rut: rut,
-      name: name + " " + lastName,
-      date: requestedDate
-    }
-
-    let token: string;
-    this.jwtExpiresIn = "86400"; // 1 days
-    try {
-      token = await signAsync(activationToken, this.jwtSecret, {
-        expiresIn: Number(this.jwtExpiresIn),
-      });
-    } catch (error) {
-      console.log(error);
-      throw new HttpErrors.Unauthorized(`Error encoding token : ${error}`);
-    }
-
-    return token;
-  }
-
-  async verifyToken(token: string): Promise<any> {
-    if (!token) {
-      throw new HttpErrors.Conflict(
-        `sign-in.token_invalid`,
-      );
-    }
-
-    let data = {
-      rut: "",
-      name: "",
-      date: ""
-    };
-
-    try {
-      // decode user profile from token
-      const decodedToken = await verifyAsync(token, this.jwtSecret);
-      // don't copy over  token field 'iat' and 'exp', nor 'email' to user profile
-      data = Object.assign(
-        {
-          rut: decodedToken.rut,
-          name: decodedToken.name,
-          date: decodedToken.date
-        },
-      );
-    } catch (error) {
-      console.log(error);
-      throw new HttpErrors.Unauthorized(
-        `sign-in.token_invalid`,
-      );
-    }
-    return data;
   }
 
   @del('/users/{rut}', {

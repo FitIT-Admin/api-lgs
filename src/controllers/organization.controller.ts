@@ -1,23 +1,15 @@
 import {
-  Count,
-  CountSchema,
   Filter,
-  FilterExcludingWhere,
   repository,
-  Where,
 } from '@loopback/repository';
 import {
-  post,
   param,
   get,
   getModelSchemaRef,
-  patch,
-  put,
-  del,
-  requestBody,
 } from '@loopback/rest';
 import {Organization} from '../models';
 import {OrganizationRepository} from '../repositories';
+import {authenticate} from '@loopback/authentication';
 
 export class OrganizationController {
   constructor(
@@ -40,6 +32,7 @@ export class OrganizationController {
       },
     },
   })
+  @authenticate('jwt')
   async find(
     @param.filter(Organization) filter?: Filter<Organization>,
   ): Promise<Organization[]> {
@@ -58,6 +51,7 @@ export class OrganizationController {
       },
     },
   })
+  @authenticate('jwt')
   async findById(
     @param.path.string('slug') slug: string): Promise<Organization> {
     return this.findSlugOrId(slug);

@@ -6,8 +6,6 @@ export * from './role.model';
 export * from './user-credentials.model';
 export * from './user.model';
 export * from './form.model';
-export * from './alternative.model';
-export * from './answer.model';
 export * from './commune.model';
 export * from './department.model';
 export * from './group.model';
@@ -18,3 +16,4 @@ export * from './country.model';
 export * from './charge.model';
 export * from './customer.model';
 export * from './report-problem.model'
+export * from './my-surveys.model'

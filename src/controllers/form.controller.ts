@@ -15,7 +15,7 @@ import {
   requestBody,
 } from '@loopback/rest';
 import {Form} from '../models';
-import {FormRepository, UserRepository} from '../repositories';
+import {FormRepository, UserRepository, MySurveysRepository} from '../repositories';
 import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
 import {inject} from '@loopback/core';
 import {authenticate} from '@loopback/authentication';
@@ -29,6 +29,8 @@ export class FormController {
     public formRepository : FormRepository,
     @repository(UserRepository)
     public userRepository : UserRepository,
+    @repository(MySurveysRepository)
+    public mySurveysRepository : MySurveysRepository,
   ) {}
 
   @post('/forms', {
@@ -116,6 +118,163 @@ export class FormController {
       const user = await this.userRepository.find({ where : { rut : form.createdBy}});
       form.createdBy = user[0].name + " " + user[0].lastName  + " " + user[0].secondLastName
     return form;
+  }
+
+  @get('/forms/my/{rut}/count', {
+    responses: {
+      '200': {
+        description: 'Form model instance',
+        content: {
+          'application/json': {
+            schema: getModelSchemaRef(Form, {includeRelations: true}),
+          },
+        },
+      },
+    },
+  })
+  @authenticate('jwt')
+  async findByRutCount(@param.path.string('rut') rut: string): Promise<Count> {
+    const user = await this.userRepository.findOne({ where: { rut: rut}});
+    var forms: Form[] = [];
+    if (user && user.group != null && user.group.length > 0){
+      try{
+        for (let group of user.group){
+          let form = await this.formRepository.find(
+            { where : 
+              { 
+                and: [ {group: group}, { status : 1} ]
+              },
+              order: ["vigencyAt ASC"]
+            }
+          )
+          //let mySurvey = await this.mySurveysRepository.find({ where : { form : form.slug } })
+          let filteredForms: Form[] = [];
+          for (let fr of form){
+            let mySurveys = await this.mySurveysRepository.find({ where : { form : fr.slug } });
+            if (mySurveys.length === 0 || mySurveys[0].status === 0){
+              filteredForms.push(fr);
+            }
+          }
+          forms = forms.concat(filteredForms);
+        }
+
+      } catch (ex){
+        console.log(ex);
+      }
+    }
+    return { count : forms.length};
+  }
+
+  @get('/forms/my/{rut}/{skip}/{limit}', {
+    responses: {
+      '200': {
+        description: 'Form model instance',
+        content: {
+          'application/json': {
+            schema: getModelSchemaRef(Form, {includeRelations: true}),
+          },
+        },
+      },
+    },
+  })
+  @authenticate('jwt')
+  async findByRut(@param.path.string('rut') rut: string, @param.path.number('skip') skip: number, @param.path.number('limit') limit: number ): Promise<Form[]> {
+    const user = await this.userRepository.findOne({ where: { rut: rut}});
+    var forms: Form[] = [];
+    if (user && user.group != null && user.group.length > 0){
+      try{
+        for (let group of user.group){
+          let form = await this.formRepository.find(
+            { where : 
+              { 
+                and: [ {group: group}, { status : 1} ]
+              },
+              order: ["vigencyAt ASC"],
+              skip: skip,
+              limit: limit
+            }
+          )
+          let filteredForms: Form[] = [];
+          for (let fr of form){
+            let mySurveys = await this.mySurveysRepository.find({ where : { form : fr.slug } });
+            if (mySurveys.length === 0 || mySurveys[0].status === 0){
+              filteredForms.push(fr);
+            }
+          }
+          forms = forms.concat(filteredForms);
+        }
+
+      } catch (ex){
+        console.log(ex);
+        return forms;
+      }
+    }
+    return forms;
+  }
+
+  @get('/forms/my-history/{rut}/count', {
+    responses: {
+      '200': {
+        description: 'Form model instance',
+        content: {
+          'application/json': {
+            schema: getModelSchemaRef(Form, {includeRelations: true}),
+          },
+        },
+      },
+    },
+  })
+  @authenticate('jwt')
+  async findSurveyHistoryCountt(@param.path.string('rut') rut: string): Promise<Count> {
+    const user = await this.userRepository.findOne({ where: { rut: rut}});
+    var forms: Form[] = [];
+    if (user && user.group != null && user.group.length > 0){
+      try{
+          var filteredForms: Form[] = [];
+          let mySurveys = await this.mySurveysRepository.find({ where : { createdBy : user.rut,  status : 1 }});
+          for (let survey of mySurveys){
+            let form = await this.findSlugOrId(survey.form);
+            filteredForms.push(form);
+          }          
+          forms = forms.concat(filteredForms);
+      } catch (ex){
+        console.log(ex);
+      }
+    }
+    return { count : forms.length };
+  }
+
+  @get('/forms/my-history/{rut}/{skip}/{limit}', {
+    responses: {
+      '200': {
+        description: 'Form model instance',
+        content: {
+          'application/json': {
+            schema: getModelSchemaRef(Form, {includeRelations: true}),
+          },
+        },
+      },
+    },
+  })
+  @authenticate('jwt')
+  async findSurveyHistoryByRut(@param.path.string('rut') rut: string, @param.path.number('skip') skip: number, @param.path.number('limit') limit: number): Promise<Form[]> {
+    const user = await this.userRepository.findOne({ where: { rut: rut}});
+    var forms: Form[] = [];
+    if (user && user.group != null && user.group.length > 0){
+      try{
+          var filteredForms: Form[] = [];
+          let mySurveys = await this.mySurveysRepository.find({ where : { createdBy : user.rut,  status : 1 }, skip: skip, limit : limit});
+          for (let survey of mySurveys){
+            let form = await this.findSlugOrId(survey.form);
+            filteredForms.push(form);
+          }          
+          forms = forms.concat(filteredForms);
+      } catch (ex){
+        console.log(ex);
+        return forms;
+      }
+    }
+    return forms;
   }
 
   @put('/forms/{slug}', {

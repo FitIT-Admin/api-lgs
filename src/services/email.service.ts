@@ -27,8 +27,7 @@ export interface EmailManager<T = Object> {
   sendMail(mailObj: EmailParamater): Promise<T>;
   getHTMLPasswordRecovery(fullname: String, token: String): string;
   getHTMLRegisterUserEmail(fullnameUser: String): string;
-  getHTMLAccountActivationSupervisor(fullnameSupervisor: String, fullnameUser: String, token: String): string;
-  getHTMLAccountActivatedUser(fullname: string): string;
+  getHTMLSureyAnswered(fullname: String, form: String, slug: String): string;
   getFromAddress(): string;
 }
 
@@ -71,32 +70,20 @@ export class EmailService {
     return dom.serialize();
   }
 
-  getHTMLAccountActivationSupervisor(fullnameSupervisor: String, fullnameUser: String, token: String): string {
-    const template = './src/assets/email/account-activation.html';
+  getHTMLSureyAnswered(fullname: String, form: String, slug: String): string {
+    const template = './src/assets/email/survey-answered.html';
     const jsdom = require('jsdom');
     const {JSDOM} = jsdom;
     const fs = require('fs');
     const contents = fs.readFileSync(template, 'utf8');
     const dom = new JSDOM(contents);
     const document = dom.window.document;
-    document.querySelector('#fullnameUser').innerHTML = fullnameUser;
-    document.querySelector('#fullnameSupervisor').innerHTML = fullnameSupervisor;
-    document.querySelector('#token').href = process.env.FRONTEND_URL + "/activate/account/" + token;
+    document.querySelector('#fullname').innerHTML = fullname;
+    document.querySelector('#form').innerHTML = form;
+    document.querySelector('#url').href = process.env.FRONTEND_URL + "/admin/survey-history/view/" + slug;
     return dom.serialize();
   }
 
-  getHTMLAccountActivatedUser(fullnameUser: String): string {
-    const template = './src/assets/email/account-activated.html';
-    const jsdom = require('jsdom');
-    const {JSDOM} = jsdom;
-    const fs = require('fs');
-    const contents = fs.readFileSync(template, 'utf8');
-    const dom = new JSDOM(contents);
-    const document = dom.window.document;
-    document.querySelector('#fullnameUser').innerHTML = fullnameUser;
-    document.querySelector('#login').href = process.env.FRONTEND_URL + "/login";
-    return dom.serialize();
-  }
 
 
   /** mailjet */
