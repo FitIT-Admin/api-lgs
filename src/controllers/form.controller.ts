@@ -96,7 +96,12 @@ export class FormController {
   async find(
     @param.filter(Form) filter?: Filter<Form>,
   ): Promise<Form[]> {
-    return this.formRepository.find(filter);
+    const forms = await this.formRepository.find(filter);
+    for (let i = 0; i < forms.length; i ++){
+      let user = await this.userRepository.findOne({ where : { rut : forms[i].createdBy }});
+      forms[i].createdBy = user?.name + " " + user?.lastName;
+    }
+    return forms;
   }
 
   @get('/forms/{slug}', {

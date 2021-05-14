@@ -153,7 +153,7 @@ export class MySurveysController {
     @param.path.string('id') id: string): Promise<void> {
     const survey = await this.mySurveysRepository.findById(id);
     survey.status = 1;
-    survey.confirmationDate = new Date();
+    survey.confirmatedAt = new Date();
     const user = await this.userRepository.findOne({ where : { rut : survey.rut }});
     const form = await this.formRepository.findOne({ where : { slug : survey.form }});
     if (form && user && user.email) {
