@@ -96,7 +96,12 @@ export class FormController {
   async find(
     @param.filter(Form) filter?: Filter<Form>,
   ): Promise<Form[]> {
-    return this.formRepository.find(filter);
+    const forms = await this.formRepository.find(filter);
+    for (let i = 0; i < forms.length; i ++){
+      let user = await this.userRepository.findOne({ where : { rut : forms[i].createdBy }});
+      forms[i].createdBy = user?.name + " " + user?.lastName;
+    }
+    return forms;
   }
 
   @get('/forms/{slug}', {
@@ -257,21 +262,22 @@ export class FormController {
     },
   })
   @authenticate('jwt')
-  async findSurveyHistoryByRut(@param.path.string('rut') rut: string, @param.path.number('skip') skip: number, @param.path.number('limit') limit: number): Promise<Form[]> {
+  async findSurveyHistoryByRut(@param.path.string('rut') rut: string, @param.path.number('skip') skip: number, @param.path.number('limit') limit: number):
+     Promise<{ form : Form, confirmatedDate : String}[]> {
+    
     const user = await this.userRepository.findOne({ where: { rut: rut}});
-    var forms: Form[] = [];
+    var forms: { form : Form, confirmatedDate : String}[] = [];
     if (user && user.group != null && user.group.length > 0){
       try{
-          var filteredForms: Form[] = [];
+          var filteredForms: any = [];
           let mySurveys = await this.mySurveysRepository.find({ where : { createdBy : user.rut,  status : 1 }, skip: skip, limit : limit});
           for (let survey of mySurveys){
             let form = await this.findSlugOrId(survey.form);
-            filteredForms.push(form);
+            filteredForms.push({ form : form, confirmatedDate: survey.confirmatedAt});
           }          
           forms = forms.concat(filteredForms);
       } catch (ex){
         console.log(ex);
-        return forms;
       }
     }
     return forms;
