@@ -17,3 +17,4 @@ export * from './charge.model';
 export * from './customer.model';
 export * from './report-problem.model'
 export * from './my-surveys.model'
+export * from './work-order.model'

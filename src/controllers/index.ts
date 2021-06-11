@@ -13,3 +13,4 @@ export * from './organization.controller';
 export * from './charge.controller';
 export * from './report-problem.controller';
 export * from './my-surveys.controller';
+export * from './work-order.controller';

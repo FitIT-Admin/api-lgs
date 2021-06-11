@@ -16,6 +16,11 @@ export class Form extends SlugEntityTitle {
   description?: string;
 
   @property({
+    type: 'boolean',
+  })
+  requireGeo: boolean;
+
+  @property({
     type: 'string',
   })
   createdBy: string;
