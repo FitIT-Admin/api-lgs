@@ -13,6 +13,7 @@ import {
   put,
   del,
   requestBody,
+  HttpErrors
 } from '@loopback/rest';
 import {Form} from '../models';
 import {FormRepository, UserRepository, MySurveysRepository} from '../repositories';
@@ -140,32 +141,38 @@ export class FormController {
   @authenticate('jwt')
   async findByRutCount(@param.path.string('rut') rut: string): Promise<Count> {
     const user = await this.userRepository.findOne({ where: { rut: rut}});
-    var forms: Form[] = [];
-    if (user && user.group != null && user.group.length > 0){
-      try{
-        for (let group of user.group){
-          let form = await this.formRepository.find(
-            { where : 
-              { 
-                and: [ {group: group}, { status : 1} ]
-              },
-              order: ["vigencyAt ASC"]
+    if (user && user.status !== 3){
+      var forms: Form[] = [];
+      if (user && user.group != null && user.group.length > 0){
+        try{
+          for (let group of user.group){
+            let form = await this.formRepository.find(
+              { where : 
+                { 
+                  and: [ {group: group}, { status : 1} ]
+                },
+                order: ["vigencyAt ASC"]
+              }
+            )
+            //let mySurvey = await this.mySurveysRepository.find({ where : { form : form.slug } })
+            let filteredForms: Form[] = [];
+            for (let fr of form){
+              let mySurveys = await this.mySurveysRepository.find({ where : { form : fr.slug } });
+              if (mySurveys.length === 0 || mySurveys[0].status === 0){
+                filteredForms.push(fr);
+              }
             }
-          )
-          //let mySurvey = await this.mySurveysRepository.find({ where : { form : form.slug } })
-          let filteredForms: Form[] = [];
-          for (let fr of form){
-            let mySurveys = await this.mySurveysRepository.find({ where : { form : fr.slug } });
-            if (mySurveys.length === 0 || mySurveys[0].status === 0){
-              filteredForms.push(fr);
-            }
+            forms = forms.concat(filteredForms);
           }
-          forms = forms.concat(filteredForms);
-        }
 
-      } catch (ex){
-        console.log(ex);
+        } catch (ex){
+          console.log(ex);
+        }
       }
+    } else {
+      throw new HttpErrors.Unauthorized(
+        `sign-in.desactivated`,
+      );
     }
     return { count : forms.length};
   }
@@ -185,34 +192,40 @@ export class FormController {
   @authenticate('jwt')
   async findByRut(@param.path.string('rut') rut: string, @param.path.number('skip') skip: number, @param.path.number('limit') limit: number ): Promise<Form[]> {
     const user = await this.userRepository.findOne({ where: { rut: rut}});
-    var forms: Form[] = [];
-    if (user && user.group != null && user.group.length > 0){
-      try{
-        for (let group of user.group){
-          let form = await this.formRepository.find(
-            { where : 
-              { 
-                and: [ {group: group}, { status : 1} ]
-              },
-              order: ["vigencyAt ASC"],
-              skip: skip,
-              limit: limit
+    if (user && user.status !== 3){
+      var forms: Form[] = [];
+      if (user && user.group != null && user.group.length > 0){
+        try{
+          for (let group of user.group){
+            let form = await this.formRepository.find(
+              { where : 
+                { 
+                  and: [ {group: group}, { status : 1} ]
+                },
+                order: ["vigencyAt ASC"],
+                skip: skip,
+                limit: limit
+              }
+            )
+            let filteredForms: Form[] = [];
+            for (let fr of form){
+              let mySurveys = await this.mySurveysRepository.find({ where : { form : fr.slug } });
+              if (mySurveys.length === 0 || mySurveys[0].status === 0){
+                filteredForms.push(fr);
+              }
             }
-          )
-          let filteredForms: Form[] = [];
-          for (let fr of form){
-            let mySurveys = await this.mySurveysRepository.find({ where : { form : fr.slug } });
-            if (mySurveys.length === 0 || mySurveys[0].status === 0){
-              filteredForms.push(fr);
-            }
+            forms = forms.concat(filteredForms);
           }
-          forms = forms.concat(filteredForms);
-        }
 
-      } catch (ex){
-        console.log(ex);
-        return forms;
+        } catch (ex){
+          console.log(ex);
+          return forms;
+        }
       }
+    } else {
+      throw new HttpErrors.Unauthorized(
+        `sign-in.desactivated`,
+      );
     }
     return forms;
   }
@@ -232,19 +245,25 @@ export class FormController {
   @authenticate('jwt')
   async findSurveyHistoryCountt(@param.path.string('rut') rut: string): Promise<Count> {
     const user = await this.userRepository.findOne({ where: { rut: rut}});
-    var forms: Form[] = [];
-    if (user && user.group != null && user.group.length > 0){
-      try{
-          var filteredForms: Form[] = [];
-          let mySurveys = await this.mySurveysRepository.find({ where : { createdBy : user.rut,  status : 1 }});
-          for (let survey of mySurveys){
-            let form = await this.findSlugOrId(survey.form);
-            filteredForms.push(form);
-          }          
-          forms = forms.concat(filteredForms);
-      } catch (ex){
-        console.log(ex);
+    if (user && user.status !== 3){
+      var forms: Form[] = [];
+      if (user && user.group != null && user.group.length > 0){
+        try{
+            var filteredForms: Form[] = [];
+            let mySurveys = await this.mySurveysRepository.find({ where : { createdBy : user.rut,  status : 1 }});
+            for (let survey of mySurveys){
+              let form = await this.findSlugOrId(survey.form);
+              filteredForms.push(form);
+            }          
+            forms = forms.concat(filteredForms);
+        } catch (ex){
+          console.log(ex);
+        }
       }
+    } else {
+      throw new HttpErrors.Unauthorized(
+        `sign-in.desactivated`,
+      );
     }
     return { count : forms.length };
   }
@@ -266,19 +285,25 @@ export class FormController {
      Promise<{ form : Form, confirmatedDate : String}[]> {
     
     const user = await this.userRepository.findOne({ where: { rut: rut}});
-    var forms: { form : Form, confirmatedDate : String}[] = [];
-    if (user && user.group != null && user.group.length > 0){
-      try{
-          var filteredForms: any = [];
-          let mySurveys = await this.mySurveysRepository.find({ where : { createdBy : user.rut,  status : 1 }, skip: skip, limit : limit});
-          for (let survey of mySurveys){
-            let form = await this.findSlugOrId(survey.form);
-            filteredForms.push({ form : form, confirmatedDate: survey.confirmatedAt});
-          }          
-          forms = forms.concat(filteredForms);
-      } catch (ex){
-        console.log(ex);
+      if (user && user.status !== 3){
+      var forms: { form : Form, confirmatedDate : String}[] = [];
+      if (user && user.group != null && user.group.length > 0){
+        try{
+            var filteredForms: any = [];
+            let mySurveys = await this.mySurveysRepository.find({ where : { createdBy : user.rut,  status : 1 }, skip: skip, limit : limit});
+            for (let survey of mySurveys){
+              let form = await this.findSlugOrId(survey.form);
+              filteredForms.push({ form : form, confirmatedDate: survey.confirmatedAt});
+            }          
+            forms = forms.concat(filteredForms);
+        } catch (ex){
+          console.log(ex);
+        }
       }
+    } else {
+      throw new HttpErrors.Unauthorized(
+        `sign-in.desactivated`,
+      );
     }
     return forms;
   }

@@ -12,6 +12,7 @@ import {
   get,
   getModelSchemaRef,
   put,
+  HttpErrors,
   requestBody,
 } from '@loopback/rest';
 import {MySurveys, Form} from '../models';
@@ -155,11 +156,17 @@ export class MySurveysController {
     survey.status = 1;
     survey.confirmatedAt = new Date();
     const user = await this.userRepository.findOne({ where : { rut : survey.rut }});
-    const form = await this.formRepository.findOne({ where : { slug : survey.form }});
-    if (form && user && user.email) {
-      this.sendPollEmail(user.email, user.name + " " + user.lastName, form.title, form.slug);
-    }
-    await this.mySurveysRepository.updateById(id, survey);
+    if (user && user.status !== 3){
+      const form = await this.formRepository.findOne({ where : { slug : survey.form }});
+      if (form && user && user.email) {
+        this.sendPollEmail(user.email, user.name + " " + user.lastName, form.title, form.slug);
+      }
+      await this.mySurveysRepository.updateById(id, survey);
+    } else {
+      throw new HttpErrors.Unauthorized(
+        `sign-in.desactivated`,
+      );
+  }
   }
 
   private async sendPollEmail(email : string, fullname : string, form : string, slug: String){

@@ -157,28 +157,16 @@ export class RecoverPasswordController {
       throw new HttpErrors.Conflict('sign-in.dntexist');
     }
 
+    if (userExists[0].status == 3){
+      throw new HttpErrors.Unauthorized(
+        `sign-in.desactivated`,
+      );
+    }
+
     if (userExists[0].status == 0) {
       return true;
     }
     return false;
-  }
-
-  async sendEmail(user: any, token: String) {
-    const mailOptions = {
-      from: this.emailManager.getFromAddress(),
-      to: user.email,
-      subject: "Recuperacion de Clave",
-      html: this.emailManager.getHTMLPasswordRecovery(user.name + " " + user.lastName, token)
-    };
-
-    this.emailManager.sendMail(mailOptions).then(function (res: any) {
-      console.log("Successfully sent: " + mailOptions.subject + " to: " + mailOptions.to);
-      return {message: `Successfully sent reset mail to ${user.email}`};
-    }).catch(function (err: any) {
-      console.log(err);
-      Sentry.captureException(err);
-      throw new HttpErrors.UnprocessableEntity("errors.humanError");
-    });
   }
 
   async generateRecoverPassToken(user: string, requestedDate: string, name: string, lastName: string): Promise<string> {

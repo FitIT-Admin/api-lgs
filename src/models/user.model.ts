@@ -92,6 +92,101 @@ export class User extends TimestampEntity {
   })
   createdBy?: string;
 
+  @property({
+    type: 'string'
+  })
+  area : string;
+  
+  @property({
+    type: 'string'
+  })
+  subDeparment : string;
+  
+  @property({
+    type: 'string'
+  })
+  operacionApoyo: string;
+  
+  @property({
+    type: 'string'
+  })
+  jefeDirecto : string;
+  
+  @property({
+    type: 'string'
+  })
+  estamento : string;
+  
+  @property({
+    type: 'string'
+  })
+  servicioOProyecto: string;
+  
+  @property({
+    type: 'string'
+  })
+  fechaIngreso : string;
+  
+  @property({
+    type: 'string'
+  })
+  emailAlternativo: string;
+  
+  @property({
+    type: 'string'
+  })
+  direccion : string;
+  
+  @property({
+    type: 'string'
+  })
+  contactoFamilia : string;
+  
+  @property({
+    type: 'string'
+  })
+  contantoMovil : string;
+  
+  @property({
+    type: 'string'
+  })
+  salud : string;
+  
+  @property({
+    type: 'string'
+  })
+  afp : string;
+  
+  @property({
+    type: 'string'
+  })
+  sueldo_base : string;
+  
+  @property({
+    type: 'string'
+  })
+  cargasFamilia : string;
+  
+  @property({
+    type: 'string'
+  })
+  kpi1 : string;
+  
+  @property({
+    type: 'string'
+  })
+  kpi2 : string;
+  
+  @property({
+    type: 'string'
+  })
+  kpi3 : string;
+  
+  @property({
+    type: 'string'
+  })
+  kpi4 : string; 
+
 
   @hasOne(() => UserCredentials)
   userCredentials: UserCredentials;
