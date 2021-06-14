@@ -17,10 +17,12 @@ npm install
 
 La aplicación lee la configuración del archivo .env (Se debe crear manual en el servidor, o se pueden versiones los .env por ambiente, utilizando 3 pipelines para instalar cada uno en la maquina correspondiente)
 
+```sh
 MONGODB_URI=mongodb://nielsen:123123@localhost:27017/nielsen
 FRONTEND_URL=http://localhost:4200
 SENDGRID_API_KEY=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
 SENDGRID_SENDER_FROM=contacto@fitit.cl
+```
 
 ## Correr aplicación
 
