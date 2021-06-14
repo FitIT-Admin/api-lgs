@@ -1,75 +1,45 @@
-# api-nielsen
+# API nielsen
 
-This application is generated using [LoopBack 4 CLI](https://loopback.io/doc/en/lb4/Command-line-interface.html) with the
-[initial project layout](https://loopback.io/doc/en/lb4/Loopback-application-layout.html).
+Es una aplicación generada con [LoopBack 4 CLI](https://loopback.io/doc/en/lb4/Command-line-interface.html) con la base inicial
+(https://loopback.io/doc/en/lb4/Loopback-application-layout.html).
 
-## Install dependencies
-
-By default, dependencies were installed when this application was generated.
-Whenever dependencies in `package.json` are changed, run the following command:
-
+## Instalar dependencias
 ```sh
 npm install
 ```
 
-To only install resolved dependencies in `package-lock.json`:
-
+## Actualizar dependencias
 ```sh
-npm ci
+npm install
 ```
 
-## Run the application
+## Configuracion
+
+La aplicación lee la configuración del archivo .env (Se debe crear manual en el servidor, o se pueden versiones los .env por ambiente, utilizando 3 pipelines para instalar cada uno en la maquina correspondiente)
+
+MONGODB_URI=mongodb://nielsen:123123@localhost:27017/nielsen
+FRONTEND_URL=http://localhost:4200
+SENDGRID_API_KEY=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
+SENDGRID_SENDER_FROM=contacto@fitit.cl
+
+## Correr aplicación
 
 ```sh
 npm start
 ```
 
-You can also run `node .` to skip the build step.
+## Verificación
 
-Open http://127.0.0.1:3000 in your browser.
+Abre http://127.0.0.1:3000 en tu navegador.
 
-## Rebuild the project
-
-To incrementally build the project:
+## Reconstruir Aplicación
 
 ```sh
 npm run build
 ```
 
-To force a full build by cleaning up cached artifacts:
+## Limpiar Aplicación
 
 ```sh
 npm run rebuild
 ```
-
-## Fix code style and formatting issues
-
-```sh
-npm run lint
-```
-
-To automatically fix such issues:
-
-```sh
-npm run lint:fix
-```
-
-## Other useful commands
-
-- `npm run migrate`: Migrate database schemas for models
-- `npm run openapi-spec`: Generate OpenAPI spec into a file
-- `npm run docker:build`: Build a Docker image for this application
-- `npm run docker:run`: Run this application inside a Docker container
-
-## Tests
-
-```sh
-npm test
-```
-
-## What's next
-
-Please check out [LoopBack 4 documentation](https://loopback.io/doc/en/lb4/) to
-understand how you can continue to add features to this application.
-
-[![LoopBack](https://github.com/strongloop/loopback-next/raw/master/docs/site/imgs/branding/Powered-by-LoopBack-Badge-(blue)-@2x.png)](http://loopback.io/)
