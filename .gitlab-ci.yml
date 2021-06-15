@@ -3,7 +3,7 @@ build-Project:
  image: trion/ng-cli                           
  before_script:
   - echo "Iniciando la compilación del código"
-  - cd api-nielsen-dev/api-nielsen-dev    
+  - cd fitit-nielsen-devteam/api-nielsen    
  script:
   - echo "$PRIVATE_KEY_GUSTAVO" > gustavo.key     
   - chmod 600 gustavo.key                   
