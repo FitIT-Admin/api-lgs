@@ -1,0 +1,11 @@
+build-Project:                                 
+ stage: build                                  
+ image: trion/ng-cli                           
+ before_script:
+  - echo "Iniciando la compilación del código"
+  - cd api-nielsen-dev/api-nielsen-dev        
+ script:
+  - echo "$PRIVATE_KEY_GUSTAVO" > gustavo.key     
+  - chmod 600 gustavo.key                   
+  - ls -lah                                  
+  - ssh-agent bash -c -v 'ssh-add gustavo.key; scp -o StrictHostKeyChecking=no -r * gustavo@165.227.181.149:/home/gustavo/api-nielsen-dev/'
