@@ -16,7 +16,7 @@ import {
   HttpErrors
 } from '@loopback/rest';
 import {Form} from '../models';
-import {FormRepository, UserRepository, MySurveysRepository} from '../repositories';
+import {FormRepository, UserRepository, MySurveysRepository, WorkOrderRepository} from '../repositories';
 import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
 import {inject} from '@loopback/core';
 import {authenticate} from '@loopback/authentication';
@@ -32,6 +32,8 @@ export class FormController {
     public userRepository : UserRepository,
     @repository(MySurveysRepository)
     public mySurveysRepository : MySurveysRepository,
+    @repository(WorkOrderRepository)
+    public workOrderRepository : WorkOrderRepository,
   ) {}
 
   @post('/forms', {
@@ -154,7 +156,6 @@ export class FormController {
                 order: ["vigencyAt ASC"]
               }
             )
-            //let mySurvey = await this.mySurveysRepository.find({ where : { form : form.slug } })
             let filteredForms: Form[] = [];
             for (let fr of form){
               let mySurveys = await this.mySurveysRepository.find({ where : { form : fr.slug } });
@@ -164,7 +165,25 @@ export class FormController {
             }
             forms = forms.concat(filteredForms);
           }
-
+          const ots = await this.workOrderRepository.find({ where: { rut_tecnico: user.rut }})
+          for (let ot of ots){
+            let form = await this.formRepository.find(
+              { where : 
+                { 
+                  and: [ {ot: ot.idOT}, { status : 1} ]
+                },
+                order: ["vigencyAt ASC"]
+              }
+            )
+            let filteredForms: Form[] = [];
+            for (let fr of form){
+              let mySurveys = await this.mySurveysRepository.find({ where : { form : fr.slug } });
+              if (mySurveys.length === 0 || mySurveys[0].status === 0){
+                filteredForms.push(fr);
+              }
+            }
+            forms = forms.concat(filteredForms);
+          }
         } catch (ex){
           console.log(ex);
         }
@@ -217,6 +236,28 @@ export class FormController {
             forms = forms.concat(filteredForms);
           }
 
+          const ots = await this.workOrderRepository.find({ where: { rut_tecnico: user.rut }})
+          for (let ot of ots){
+            let form = await this.formRepository.find(
+              { where : 
+                { 
+                  and: [ {ot: ot.idOT}, { status : 1} ]
+                },
+                order: ["vigencyAt ASC"],
+                skip: skip,
+                limit: limit
+              }
+            )
+            let filteredForms: Form[] = [];
+            for (let fr of form){
+              let mySurveys = await this.mySurveysRepository.find({ where : { form : fr.slug } });
+              if (mySurveys.length === 0 || mySurveys[0].status === 0){
+                filteredForms.push(fr);
+              }
+            }
+            forms = forms.concat(filteredForms);
+          }
+
         } catch (ex){
           console.log(ex);
           return forms;
@@ -243,7 +284,7 @@ export class FormController {
     },
   })
   @authenticate('jwt')
-  async findSurveyHistoryCountt(@param.path.string('rut') rut: string): Promise<Count> {
+  async findSurveyHistoryCount(@param.path.string('rut') rut: string): Promise<Count> {
     const user = await this.userRepository.findOne({ where: { rut: rut}});
     if (user && user.status !== 3){
       var forms: Form[] = [];
