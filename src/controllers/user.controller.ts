@@ -289,9 +289,10 @@ export class UserController {
   })
   @authenticate('jwt')
   async count(
-    @param.where(User) where?: Where<User>,
-  ): Promise<Count> {
-    return this.userRepository.count(where);
+    @param.filter(User) filter?: Filter<User>,
+  ): Promise<Number> {
+    const users = await this.userRepository.find(filter);
+    return users.length;
   }
 
   @del('/users/{rut}', {
