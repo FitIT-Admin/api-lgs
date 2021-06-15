@@ -8,4 +8,4 @@ build-Project:
   - echo "$PRIVATE_KEY_GUSTAVO" > gustavo.key     
   - chmod 600 gustavo.key                   
   - ls -lah                                  
-  - ssh-agent bash -c -v 'ssh-add gustavo.key; scp -o StrictHostKeyChecking=no -r * gustavo@165.227.181.149:/home/gustavo/api-nielsen-dev/'
+  - ssh-agent bash -c -v 'ssh-add gustavo.key; ssh -o StrictHostKeyChecking=no  gustavo@165.227.181.149:/home/gustavo/api-nielsen-dev/'
