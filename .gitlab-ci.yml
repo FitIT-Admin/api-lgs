@@ -5,7 +5,7 @@ build-Project:
   - echo "Iniciando la compilación del código"
   #- cd api-nielsen    
  script:
-  - echo "$PRIVATE_KEY_GUSSS" > gusss.key     
-  - chmod 600 gusss.key                   
+  - echo "$PRIVATE_KEY_DEVELOPER" > developer.key     
+  - chmod 600 developer.key                   
   - ls -lah                                  
-  - ssh-agent bash -c -v 'ssh-add gusss.key; scp -o StrictHostKeyChecking=no -r *  gusss@159.65.163.63:/home/gusss/api-nielsen-dev/'
+  - ssh-agent bash -c -v 'ssh-add developer.key; scp -o StrictHostKeyChecking=no -r *  developer@134.122.9.76:/home/developer/api/'
