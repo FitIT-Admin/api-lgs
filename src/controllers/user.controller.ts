@@ -243,7 +243,7 @@ export class UserController {
         token: token
       };
     }
-    throw new HttpErrors.Unauthorized();    
+    throw new HttpErrors.Unauthorized("Usuario no registrado, favor contacte al administrador");    
   }
 
   @get('/users/logged-in', {
