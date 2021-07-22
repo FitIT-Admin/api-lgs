@@ -8,4 +8,4 @@ build-Project:
   - echo "$PRIVATE_KEY_DEVELOPER" > developer.key     
   - chmod 600 developer.key                   
   - ls -lah                                  
-  - ssh-agent bash -c -v 'ssh-add developer.key; scp -o StrictHostKeyChecking=no -r *  developer@134.122.9.76:/home/developer/api/'
+  - ssh-agent bash -c -v 'ssh-add developer.key; scp -o StrictHostKeyChecking=no -r *  developer@134.122.9.76:/home/developer/Api_Nielsen/'
