@@ -367,6 +367,7 @@ export class FormController {
     formTemp.customer = form.customer;
     formTemp.group = form.group;
     formTemp.ot = form.ot;
+    formTemp.requireGeo = form.requireGeo;
     formTemp.questions = form.questions;
     await this.formRepository.updateById(formTemp.id, formTemp);
   }

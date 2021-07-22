@@ -249,7 +249,7 @@ export class RecoverPasswordController {
         // set the password
         await this.userRepository.userCredentials(user.rut).create({password});
         user.status = 1;
-        await this.userRepository.updateById(user.id, user);
+        await this.userRepository.updateById(user.id, user)
         await this.auditActionsRepository.create(registerAuditAction(user.id, "Usuario cargado via script crea sus credenciales"));
         return true;
       } else {
