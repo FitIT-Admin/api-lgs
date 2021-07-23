@@ -16,7 +16,7 @@ import {
   HttpErrors
 } from '@loopback/rest';
 import {Group} from '../models';
-import {GroupRepository, UserRepository} from '../repositories';
+import {GroupRepository, UserRepository, FormRepository} from '../repositories';
 import {authenticate} from '@loopback/authentication';
 import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
 import {inject} from '@loopback/core';
@@ -27,6 +27,8 @@ export class GroupController {
     public groupRepository : GroupRepository,
     @repository(UserRepository)
     public userRepository : UserRepository,
+    @repository(FormRepository)
+    public formRepository : FormRepository,
   ) {}
 
   @post('/groups', {
@@ -133,6 +135,21 @@ export class GroupController {
     groupTemp.status = group.status;
     groupTemp.organization = groupTemp.organization;
     await this.groupRepository.updateById(groupTemp.id, groupTemp);
+    const groupNew = await this.groupRepository.findById(groupTemp.id);
+    let forms = await this.formRepository.find({ where : { group : slug}});
+    for (let form of forms){
+      form.group = groupNew.slug;
+      await this.formRepository.update(form);
+    }
+    let users = await this.userRepository.find({ where : { group : slug }});
+    for (let user of users){
+      for (let i = 0; i < user.group.length; i++){
+        if (user.group[i] === slug){
+          user.group[i] = groupNew.slug
+          await this.userRepository.update(user);
+        }
+      }
+    }
   }
 
   @del('/groups/{slug}', {

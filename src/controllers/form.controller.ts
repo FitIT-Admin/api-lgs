@@ -370,6 +370,12 @@ export class FormController {
     formTemp.requireGeo = form.requireGeo;
     formTemp.questions = form.questions;
     await this.formRepository.updateById(formTemp.id, formTemp);
+    const formNew = await this.formRepository.findById(formTemp.id);
+    let surveys = await this.mySurveysRepository.find({ where : { form : slug}});
+    for (let survey of surveys){
+      survey.form = formNew.slug;
+      await this.mySurveysRepository.update(survey);
+    }
   }
 
   @put('/forms/questions/{slug}', {

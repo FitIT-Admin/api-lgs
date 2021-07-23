@@ -26,7 +26,7 @@ export class Role extends SlugEntityTitle {
   status?: number;
 
   @property.array(String)
-  privilege: String[];
+  privilege: string[];
 
   constructor(data?: Partial<Role>) {
     super(data);

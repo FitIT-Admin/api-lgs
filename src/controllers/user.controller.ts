@@ -200,6 +200,46 @@ export class UserController {
     await this.userRepository.replaceById(users[0].id, users[0]);
   }
 
+  @get('/users/current', {
+    responses: {
+      '200': {
+        description: 'Token',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                token: {
+                  type: 'string',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  })
+  @authenticate('jwt')
+  async current(@inject(SecurityBindings.USER) currentUserProfile: UserProfile): Promise<Object> {
+    const rut = currentUserProfile[securityId];
+    var user = await this.userRepository.findOne({where: {rut: rut}});
+    if (user){
+      const role = await this.findRoleSlugOrId(user.role);
+
+      return {
+        rut: user.rut,
+        name: user.name + " " + user.lastName,
+        email: user.email,
+        role: {
+          slug: role.slug,
+          name: role.title
+        },
+        privilege: role.privilege      
+      };
+    }
+    throw new HttpErrors.Unauthorized("Usuario no registrado, favor contacte al administrador");    
+  }
+
   @post('/users/authentication', {
     responses: {
       '200': {

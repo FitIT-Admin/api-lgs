@@ -106,6 +106,7 @@ export class ApiNielsenApplication extends BootMixin(
       connector: 'mongodb',
       url: process.env.MONGODB_URI,
       useNewUrlParser: true,
+      allowExtendedOperators : true
     });
     this.bind('datasources.db').toClass(DbDataSource);
   }
