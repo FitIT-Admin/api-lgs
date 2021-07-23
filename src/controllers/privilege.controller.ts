@@ -2,7 +2,7 @@ import {
   Count,
   CountSchema,
   Filter,
-  FilterExcludingWhere,
+  PredicateComparison,
   repository,
   Where,
 } from '@loopback/repository';
@@ -141,6 +141,16 @@ export class PrivilegeController {
     privilegeTemp.canEdit = privilege.canEdit;
     privilegeTemp.canRemove = privilege.canRemove;
     await this.privilegeRepository.updateById(privilegeTemp.id, privilegeTemp);
+    const privilegeNew = await this.privilegeRepository.findById(privilegeTemp.id);
+    let roles = await this.roleRepository.find({ where : { privilege : slug  as PredicateComparison<string[]>}});
+    for (let role of roles){
+      for (let i = 0; i < role.privilege.length; i++){
+        if (role.privilege[i] === slug){
+          role.privilege[i] = privilegeNew.slug
+          await this.roleRepository.update(role);
+        }
+      }
+    }
   }
 
   @del('/privileges/{slug}', {

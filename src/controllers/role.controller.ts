@@ -137,7 +137,13 @@ export class RoleController {
     roleTemp.title = role.title;
     roleTemp.status = role.status;
     roleTemp.privilege = role.privilege;
-    await this.roleRepository.updateById(roleTemp.id, roleTemp);
+  await this.roleRepository.updateById(roleTemp.id, roleTemp);
+    const roleNew = await this.roleRepository.findById(roleTemp.id);
+    let users = await this.userRepository.find({ where : { role : slug}});
+    for (let user of users){
+      user.role = roleNew.slug;
+      await this.userRepository.update(user);
+    }
   }
 
   @del('/roles/{slug}', {
