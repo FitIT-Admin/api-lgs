@@ -31,7 +31,7 @@ export class MySurveys extends TimestampEntity {
   longitude: number
 
   @property.array(Object)
-  questions: {title: string; answer: any[]}[];
+  questions: {title: string; answer: any[], tipo: string}[];
 
   @property({
     type: 'number',

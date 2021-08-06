@@ -2,6 +2,7 @@
 import {MySurveys, Form} from '../models';
 import * as fs from 'fs';
 const puppeteer = require('puppeteer');
+import { writeFile } from 'fs';
 
 /**
  * Creates html text for product details view
@@ -18,13 +19,45 @@ export async function buildPdfText(mySurvey: MySurveys, form : Form): Promise<st
     const status = form.status === 1 ? 'Aprobado' :  form.status === 2 ? 'Suspendido' : 'Eliminado'; 
     const vigency = form.vigencyAt?.toDateString().substring(0, 9) === '5000-01-01' ? 'Indefinida' : 'Definida';
 
+   
     const answers = mySurvey.questions
     ? mySurvey.questions
         .map(question => {
         let selected = question.answer.filter( (ans: any) => {
             return ans.selected;
         });
+
+          if(question.tipo == "multiple"){  
+              if(selected[0]){
           return `<li class="lide"><b>${question.title}</b><br>${selected[0].value}</li>`;
+              }
+          } else if (question.tipo == "mixta") {
+               if(selected.length > 0){
+                    let respuesta : any;
+                    respuesta = `<li class="lide"><b>${question.title}</b><br>`;
+                    for (let i=0; i < selected.length; i++){
+                        respuesta += `${selected[i].value}<br>`;
+                    }
+                    respuesta += `</li>`;
+
+                    return respuesta;
+               }
+
+          }else if (question.tipo == "abierta") {
+            if(selected[0]){
+              return `<li class="lide"><b>${question.title}</b><br>${selected[0].selected}</li>`;
+            }
+          }else if (question.tipo == "menu") {
+            if(selected[0]){
+                return `<li class="lide"><b>${question.title}</b><br>${selected[0].value}</li>`;
+            }
+          }else if (question.tipo == "subir") {
+            if(selected[0]){
+            let uri = process.env.BACKEND_URL+"/uploads/"+selected[0].selected;
+                return `<li class="lide"><b>${question.title}</b><br><img src="${uri}" alt="${uri}" ></img></li>`;
+            }
+          }
+   
         })
         .join('\n')
     : '';
@@ -227,11 +260,15 @@ export async function createMySurveyPdf(mySurvey: MySurveys, form : Form, nameFi
             const html = fs.readFileSync(`./${nameFile}.html`, 'utf8');
             console.log('PDF - Generated HTML');
             console.log('PDF - Setting HTML on PDF');
+            
             await page.setContent(html, {
-              waitUntil: 'domcontentloaded',
+              waitUntil: 'networkidle2',
             });
+            
+            //await page.emulateMedia('screen');
             console.log('PDF - Generated HTML on PDF');
             console.log('PDF - Creating PDF');
+            
             await page.pdf({
               format: 'A4',
               margin: {

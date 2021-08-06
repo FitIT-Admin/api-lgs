@@ -52,6 +52,11 @@ export class Form extends SlugEntityTitle {
   publishAt?: Date;
 
   @property({
+    type: 'string',
+  })
+  tipo_form: string;
+
+  @property({
     type: 'date',
   })
   vigencyAt?: Date;
@@ -67,7 +72,7 @@ export class Form extends SlugEntityTitle {
   deleteAt?: Date;
 
   @property.array(Object)
-  questions: {title: string; alternatives: string[]}[];
+  questions: {title: string; alternatives: string[], tipo: string, condicional: string[]}[];
 
   // Define well-known properties here
 

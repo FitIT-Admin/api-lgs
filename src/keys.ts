@@ -9,6 +9,7 @@ import {User} from './models';
 import {Credentials} from './repositories';
 import {EmailManager} from './services/email.service';
 import {PasswordHasher} from './services/hash.password.bcryptjs';
+import {FileUploadHandler} from './types';
 
 export namespace TokenServiceConstants {
   export const TOKEN_SECRET_VALUE = 'C0.mpl@nz.!1';
@@ -44,4 +45,14 @@ export namespace EmailManagerBindings {
   export const SEND_MAIL = BindingKey.create<EmailManager>('services.email.send');
 }
 
+/**
+ * Binding key for the file upload service
+ */
+export const FILE_UPLOAD_SERVICE = BindingKey.create<FileUploadHandler>(
+  'services.FileUpload',
+);
 
+/**
+ * Binding key for the storage directory
+ */
+export const STORAGE_DIRECTORY = BindingKey.create<string>('storage.directory');

@@ -198,7 +198,7 @@ export class MySurveysController {
   async buildPdf(@param.path.string('id') id: string): Promise<Object> {
     const mySurveys = await this.mySurveysRepository.findById(id);
     const form = await this.findSlugOrIdForm(mySurveys.form);
-    let nameFile = mySurveys.rut + "_" + form.slug;
+    let nameFile = /*mySurveys.rut + "_" +*/ form.slug;
     const file = await createMySurveyPdf(mySurveys, form, nameFile);
     fs.unlinkSync('./' + nameFile + '.pdf');
     fs.unlinkSync('./' + nameFile + '.html');

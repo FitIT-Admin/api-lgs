@@ -62,3 +62,7 @@ typings/
 
 # Cache used by TypeScript's incremental build
 *.tsbuildinfo
+/nbproject/private/
+/nbproject/
+
+/public/uploads
