@@ -161,7 +161,13 @@ export class FormController {
               let mySurveys = await this.mySurveysRepository.find({ where : { form : fr.slug } });
               if (mySurveys.length === 0 || mySurveys[0].status === 0){
                 filteredForms.push(fr);
+              } else {
+                  for (let myserv of mySurveys){
+                    if (myserv.length === 0 || myserv.status === 0){
+                      filteredForms.push(fr);
               }
+            }
+              }             
             }
             forms = forms.concat(filteredForms);
           }
@@ -180,6 +186,12 @@ export class FormController {
               let mySurveys = await this.mySurveysRepository.find({ where : { form : fr.slug } });
               if (mySurveys.length === 0 || mySurveys[0].status === 0){
                 filteredForms.push(fr);
+              } else {
+              for (let myserv of mySurveys){
+                  if (myserv.length === 0 || myserv.status === 0){
+                    filteredForms.push(fr);
+              }
+            }
               }
             }
             forms = forms.concat(filteredForms);
@@ -231,6 +243,12 @@ export class FormController {
               let mySurveys = await this.mySurveysRepository.find({ where : { form : fr.slug } });
               if (mySurveys.length === 0 || mySurveys[0].status === 0){
                 filteredForms.push(fr);
+              } else {
+                  for (let myserv of mySurveys){
+                    if (myserv.length === 0 || myserv.status === 0){
+                      filteredForms.push(fr);
+              }
+            }
               }
             }
             forms = forms.concat(filteredForms);
@@ -253,6 +271,12 @@ export class FormController {
               let mySurveys = await this.mySurveysRepository.find({ where : { form : fr.slug } });
               if (mySurveys.length === 0 || mySurveys[0].status === 0){
                 filteredForms.push(fr);
+              } else {
+                  for (let myserv of mySurveys){
+                    if (myserv.length === 0 || myserv.status === 0){
+                      filteredForms.push(fr);
+              }
+            }
               }
             }
             forms = forms.concat(filteredForms);
@@ -334,7 +358,7 @@ export class FormController {
             let mySurveys = await this.mySurveysRepository.find({ where : { createdBy : user.rut,  status : 1 }, skip: skip, limit : limit});
             for (let survey of mySurveys){
               let form = await this.findSlugOrId(survey.form);
-              filteredForms.push({ form : form, confirmatedDate: survey.confirmatedAt});
+              filteredForms.push({ form : form, confirmatedDate: survey.confirmatedAt, MySurverId: survey.id});
             }          
             forms = forms.concat(filteredForms);
         } catch (ex){
@@ -365,6 +389,7 @@ export class FormController {
     formTemp.title = form.title;
     formTemp.description = form.description;
     formTemp.customer = form.customer;
+    formTemp.tipo_form = form.tipo_form;
     formTemp.group = form.group;
     formTemp.ot = form.ot;
     formTemp.requireGeo = form.requireGeo;
@@ -387,7 +412,7 @@ export class FormController {
   })
   @authenticate('jwt')
   async questions(
-    @param.path.string('slug') slug: string,  @requestBody() questions: {title: string; alternatives: string[]}[],
+    @param.path.string('slug') slug: string,  @requestBody() questions: {title: string, alternatives: string[], tipo: string, condicional: string[]}[],
   ): Promise<void> {
     const formTemp = await this.findSlugOrId(slug);
     formTemp.questions =questions;
