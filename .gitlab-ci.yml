@@ -7,8 +7,8 @@ build-Project:
   - echo "Iniciando la compilación del código"
   #- cd api-nielsen    
  script:
-  - echo "$PRIVATE_KEY_FBPRODNIE" > fbprodnie.key     
-  - chmod 600 fbprodnie.key                   
+  - echo "$PRIVATE_KEY_FBDEVNIE" > fbdevnie.key     
+  - chmod 600 fbdevnie.key                   
   - ls -lah                                  
-  - ssh-agent bash -c -v 'ssh-add fbprodnie.key; scp -o StrictHostKeyChecking=no -r *  developer@165.22.46.178:/home/developer/api/'
+  - ssh-agent bash -c -v 'ssh-add fbdevnie.key; scp -o StrictHostKeyChecking=no -r *  developer@159.65.34.9:/home/developer/api/'
 
