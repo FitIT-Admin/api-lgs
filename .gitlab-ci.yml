@@ -1,8 +1,8 @@
 build-Project:                                 
  stage: build                                  
- image: trion/ng-cli   
+ image: trion/ng-cli     
  only:
- - dev                        
+ - dev                      
  before_script:
   - echo "Iniciando la compilación del código"
   #- cd api-nielsen    
