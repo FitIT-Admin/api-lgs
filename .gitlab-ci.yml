@@ -2,13 +2,13 @@ build-Project:
  stage: build                                  
  image: trion/ng-cli   
  only:
- - dev                        
+ - qa                       
  before_script:
   - echo "Iniciando la compilación del código"
   #- cd api-nielsen    
  script:
-  - echo "$PRIVATE_KEY_FBDEVNIE" > fbdevnie.key     
-  - chmod 600 fbdevnie.key                   
+  - echo "$PRIVATE_KEY_FBQANIE" > fbqanie.key     
+  - chmod 600 fbqanie.key                   
   - ls -lah                                  
-  - ssh-agent bash -c -v 'ssh-add fbdevnie.key; scp -o StrictHostKeyChecking=no -r *  developer@159.65.34.9:/home/developer/api/'
+  - ssh-agent bash -c -v 'ssh-add fbqanie.key; scp -o StrictHostKeyChecking=no -r *  developer@167.71.246.145:/home/developer/api/'
 
