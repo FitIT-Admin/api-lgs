@@ -187,9 +187,14 @@ export class User extends TimestampEntity {
   })
   kpi4 : string; 
 
+  @property({
+    type: 'string'
+  })
+  rutJefe: string;
 
   @hasOne(() => UserCredentials)
   userCredentials: UserCredentials;
+
 
   // Define well-known properties here
 

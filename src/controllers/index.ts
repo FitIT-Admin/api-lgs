@@ -16,3 +16,4 @@ export * from './my-surveys.controller';
 export * from './work-order.controller';
 export * from './file-download.controller';
 export * from './file-upload.controller';
+export * from './coordinator.controller';

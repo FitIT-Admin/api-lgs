@@ -15,6 +15,8 @@ export * from './region.model';
 export * from './country.model';
 export * from './charge.model';
 export * from './customer.model';
-export * from './report-problem.model'
-export * from './my-surveys.model'
-export * from './work-order.model'
+export * from './report-problem.model';
+export * from './my-surveys.model';
+export * from './request.model';
+export * from './work-order.model';
+export * from './coordinator.model';
