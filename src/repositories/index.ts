@@ -1,4 +1,3 @@
-
 export * from './audit-actions.repository';
 export * from './audit-authentication.repository';
 export * from './recover-password.repository';
@@ -15,5 +14,8 @@ export * from './organization.repository';
 export * from './privilege.repository';
 export * from './region.repository';
 export * from './country.repository';
-export * from './report-problem.repository';export * from './my-surveys.repository';
+export * from './report-problem.repository';
+export * from './my-surveys.repository';
+export * from './request.repository';
 export * from './work-order.repository';
+export * from './coordinator.repository';
