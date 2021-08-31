@@ -180,6 +180,8 @@ export class UserController {
     users[0].charge = user.charge;
     users[0].department = user.department;
     users[0].group = user.group;
+    users[0].rutJefe = user.rutJefe;
+    users[0].rut = user.rut;
     await this.userRepository.updateById(users[0].id, users[0]);
   }
 
@@ -273,6 +275,7 @@ export class UserController {
 
       return {
         rut: user.rut,
+        rutJefe : user.rutJefe,
         name: user.name + " " + user.lastName,
         email: user.email,
         role: {

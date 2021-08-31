@@ -631,7 +631,7 @@ async findRequestUnassignedByRut(@param.path.string('rut') rut: string, @param.p
   })
   @authenticate('jwt')
   async questions(
-    @param.path.string('slug') slug: string,  @requestBody() questions: {title: string, alternatives: string[], tipo: string, condicionals: string[]}[],
+    @param.path.string('slug') slug: string,  @requestBody() questions: {title: string, alternatives: string[], tipo: string, condicional: string[]}[],
   ): Promise<void> {
     const formTemp = await this.findSlugOrId(slug);
     formTemp.questions =questions;

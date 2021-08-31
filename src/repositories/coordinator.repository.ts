@@ -1,4 +1,3 @@
-
 import {SlugRepositoryTitle} from '../lib/slug-repository.title';
 import {Coordinator} from '../models';
 import {DbDataSource} from '../datasources';
