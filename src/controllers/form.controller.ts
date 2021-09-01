@@ -461,7 +461,9 @@ async findRequestHistoryByRut(@param.path.string('rut') rut: string, @param.path
                   {status : {gte: 0} }
                 ] ,
               } , 
-                skip: skip, limit : limit
+              skip: skip, 
+              order: ['status ASC', 'createdAt DESC'],
+              limit : limit
             });
           for (let request of requests){
             let form = await this.findSlugOrId(request.form);
@@ -565,7 +567,10 @@ async findRequestUnassignedByRut(@param.path.string('rut') rut: string, @param.p
                   { status : 0 },
                   { status : 2 }
                 ]
-              }, skip: skip, limit : limit
+              }, 
+              skip: skip, 
+              order: ['status ASC', 'createdAt DESC'],
+              limit : limit
             });
           for (let request of requests){
             let form = await this.findSlugOrId(request.form);
