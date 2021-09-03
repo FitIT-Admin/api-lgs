@@ -16,7 +16,7 @@ import {
   HttpErrors
 } from '@loopback/rest';
 import {Form} from '../models';
-import {FormRepository, UserRepository, MySurveysRepository, RequestRepository , WorkOrderRepository} from '../repositories';
+import {FormRepository, UserRepository, MySurveysRepository, RequestRepository , WorkOrderRepository, RoleRepository} from '../repositories';
 import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
 import {inject} from '@loopback/core';
 import {authenticate} from '@loopback/authentication';
@@ -36,6 +36,8 @@ export class FormController {
     public requestRepository : RequestRepository,
     @repository(WorkOrderRepository)
     public workOrderRepository : WorkOrderRepository,
+    @repository(RoleRepository)
+    public roleRepository : RoleRepository
   ) {}
 
   @post('/forms', {
@@ -467,12 +469,16 @@ async findRequestHistoryByRut(@param.path.string('rut') rut: string, @param.path
             });
           for (let request of requests){
             let form = await this.findSlugOrId(request.form);
-            const user = await this.userRepository.findOne({ where: { rut: request.createdBy }});
+            const userCreatedBy = await this.userRepository.findOne({ where: { rut: request.createdBy }});
+            const userAssignedAt = await this.userRepository.findOne({ where: { rut: request.assignedAt }});
+            const roleAssigToRole = await this.roleRepository.findOne({ where: { id: request.assigToRole }});
             filteredForms.push({ 
               form : form, 
               confirmatedDate: request.confirmatedAt, 
               RequestId: request.id,
-              createdBy : user,
+              createdBy : userCreatedBy,
+              assignedAt : userAssignedAt,
+              assigToRole : roleAssigToRole,
               request : request
             });
           }          
@@ -574,12 +580,16 @@ async findRequestUnassignedByRut(@param.path.string('rut') rut: string, @param.p
             });
           for (let request of requests){
             let form = await this.findSlugOrId(request.form);
-            const user = await this.userRepository.findOne({ where: { rut: request.createdBy }});
+            const userCreatedBy = await this.userRepository.findOne({ where: { rut: request.createdBy }});
+            const userAssignedAt = await this.userRepository.findOne({ where: { rut: request.assignedAt }});
+            const roleAssigToRole = await this.roleRepository.findOne({ where: { id: request.assigToRole }});
             filteredForms.push({ 
               form : form, 
               confirmatedDate: request.confirmatedAt, 
               RequestId: request.id,
-              createdBy : user,
+              createdBy : userCreatedBy,
+              assignedAt : userAssignedAt,
+              assigToRole : roleAssigToRole,
               request : request
             });
           }          
