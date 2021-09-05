@@ -132,6 +132,7 @@ export class CoordinatorController {
     //coordinatorTemp.coordinator = role.coordinator;
     coordinatorTemp.createdBy = coordinator.createdBy;
     coordinatorTemp.id = coordinator.id;
+    coordinatorTemp.coordinatorId = coordinator.coordinatorId;
     coordinatorTemp.name = coordinator.name;
     coordinatorTemp.subordinates = coordinator.subordinates;
     await this.coordinatorRepository.updateById(coordinatorTemp.id, coordinatorTemp);
