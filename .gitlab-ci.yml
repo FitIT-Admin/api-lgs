@@ -1,4 +1,4 @@
-build-Project:                                 
+build-dev-Project:                                 
  stage: build                                  
  image: trion/ng-cli   
  only:
@@ -12,3 +12,30 @@ build-Project:
   - ls -lah                                  
   - ssh-agent bash -c -v 'ssh-add fbdevnie.key; scp -o StrictHostKeyChecking=no -r *  developer@159.65.34.9:/home/developer/api/'
 
+build-qa-Project:                                 
+ stage: build                                  
+ image: trion/ng-cli   
+ only:
+ - qa                     
+ before_script:
+  - echo "Iniciando la compilación del código"
+  #- cd api-nielsen    
+ script:
+  - echo "$PRIVATE_KEY_FBQANIE" > fbqanie.key     
+  - chmod 600 fbqanie.key                   
+  - ls -lah                                  
+  - ssh-agent bash -c -v 'ssh-add fbqanie.key; scp -o StrictHostKeyChecking=no -r *  developer@167.71.246.145:/home/developer/api/'
+
+build-prod-Project:                                 
+ stage: build                                  
+ image: trion/ng-cli   
+ only:
+ - prod                    
+ before_script:
+  - echo "Iniciando la compilación del código"
+  #- cd api-nielsen    
+ script:
+  - echo "$PRIVATE_KEY_FBPRODNIE" > fbprodnie.key     
+  - chmod 600 fbprodnie.key                   
+  - ls -lah                                  
+  - ssh-agent bash -c -v 'ssh-add fbprodnie.key; scp -o StrictHostKeyChecking=no -r *  developer@165.22.46.178:/home/developer/api/'
