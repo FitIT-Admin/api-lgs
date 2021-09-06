@@ -159,10 +159,10 @@ export class FormController {
                 },
                 order: ["vigencyAt ASC"]
               }
-            )
+            ) 
             let filteredForms: Form[] = [];
             for (let fr of form){
-              let mySurveys = await this.mySurveysRepository.find({ where : { form : fr.slug } });
+              let mySurveys = await this.mySurveysRepository.find({ where : { form : fr.slug, createdBy : user.rut } });
               if (mySurveys.length === 0 || mySurveys[0].status === 0){
                 filteredForms.push(fr);
               } else {
@@ -187,7 +187,7 @@ export class FormController {
             )
             let filteredForms: Form[] = [];
             for (let fr of form){
-              let mySurveys = await this.mySurveysRepository.find({ where : { form : fr.slug } });
+              let mySurveys = await this.mySurveysRepository.find({ where : { form : fr.slug, createdBy : user.rut } });
               if (mySurveys.length === 0 || mySurveys[0].status === 0){
                 filteredForms.push(fr);
               } else {
@@ -244,7 +244,7 @@ export class FormController {
             )
             let filteredForms: Form[] = [];
             for (let fr of form){
-              let mySurveys = await this.mySurveysRepository.find({ where : { form : fr.slug } });
+              let mySurveys = await this.mySurveysRepository.find({ where : { form : fr.slug, createdBy : user.rut } });
               if (mySurveys.length === 0 || mySurveys[0].status === 0){
                 filteredForms.push(fr);
               } else {
@@ -272,7 +272,7 @@ export class FormController {
             )
             let filteredForms: Form[] = [];
             for (let fr of form){
-              let mySurveys = await this.mySurveysRepository.find({ where : { form : fr.slug } });
+              let mySurveys = await this.mySurveysRepository.find({ where : { form : fr.slug, createdBy : user.rut } });
               if (mySurveys.length === 0 || mySurveys[0].status === 0){
                 filteredForms.push(fr);
               } else {
