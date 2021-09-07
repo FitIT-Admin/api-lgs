@@ -72,7 +72,7 @@ export class Form extends SlugEntityTitle {
   deleteAt?: Date;
 
   @property.array(Object)
-  questions: {title: string; alternatives: string[], tipo: string, condicional: string[]}[];
+  questions: {title: string; alternatives: string[], tipo: string, condicional: string[],validations: string[]}[];
 
   // Define well-known properties here
 
