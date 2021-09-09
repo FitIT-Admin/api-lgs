@@ -19,3 +19,4 @@ export * from './my-surveys.repository';
 export * from './request.repository';
 export * from './work-order.repository';
 export * from './coordinator.repository';
+export * from './user-score.repository';
