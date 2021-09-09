@@ -192,6 +192,16 @@ export class User extends TimestampEntity {
   })
   rutJefe: string;
 
+  @property({
+    type: 'string'
+  })
+  cod_andes: string;
+  
+  @property({
+    type: 'string'
+  })
+  cod_tango: string;
+
   @hasOne(() => UserCredentials)
   userCredentials: UserCredentials;
 
