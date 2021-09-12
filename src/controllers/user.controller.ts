@@ -181,6 +181,8 @@ export class UserController {
     users[0].department = user.department;
     users[0].group = user.group;
     users[0].rutJefe = user.rutJefe;
+    users[0].cod_andes = user.cod_andes;
+    users[0].cod_tango = user.cod_tango;
     users[0].rut = user.rut;
     await this.userRepository.updateById(users[0].id, users[0]);
   }
@@ -283,7 +285,9 @@ export class UserController {
           name: role.title
         },
         privilege: role.privilege,
-        token: token
+        token: token,
+        cod_andes: user.cod_andes,
+        cod_tango: user.cod_tango
       };
     }
     throw new HttpErrors.Unauthorized("Usuario no registrado, favor contacte al administrador");    
