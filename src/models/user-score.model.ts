@@ -30,6 +30,12 @@ export class UserScore extends SlugEntityTitle {
   })
   periodo: string;
 
+  @property({
+    type: 'string',
+    required: true,
+  })
+  cuenta: string;
+
 
   constructor(data?: Partial<UserScore>) {
     super(data);

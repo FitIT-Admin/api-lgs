@@ -83,7 +83,7 @@ export class UserScoreController {
                 {
                     codigo: codigo_andes
                 },
-                order: ["id DESC"],
+                order: ["periodo DESC"],
                 limit: 1
                 }));
         puntos.push(await this.userScoreRepository.findOne(
@@ -91,7 +91,7 @@ export class UserScoreController {
                 {
                     codigo: codigo_tango
                 },
-                order: ["id DESC"],
+                order: ["periodo DESC"],
                 limit: 1
                 }));
 
