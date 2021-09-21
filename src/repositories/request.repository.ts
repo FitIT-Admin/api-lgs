@@ -1,5 +1,5 @@
 import {DefaultCrudRepository} from '@loopback/repository';
-import {Request} from '../models';
+import {Request, User} from '../models';
 import {DbDataSource} from '../datasources';
 import {inject} from '@loopback/core';
 
@@ -12,4 +12,21 @@ Request,
   ) {
     super(Request, dataSource);
   }
+
+  async getRequestReport(): Promise<any> {
+    const data = await new Promise((resolve, reject) => {
+      this.execute('Request', 'aggregate', [
+        {
+          $lookup:{
+              from: "User",
+              localField : "createdBy",
+              foreignField : "rut",
+              as : "createdByUser"
+          }
+        }
+      ]);
+    });
+    return data;
+  }
+
 }
