@@ -26,6 +26,7 @@ import {
 } from '../keys';
 import {createMySurveyPdf} from '../lib/build_pdf';
 import * as fs from 'fs';
+import { resolve } from 'dns';
 
 const sgMail = require('@sendgrid/mail')
 
@@ -118,8 +119,78 @@ export class RequestController {
   @authenticate('jwt')
   async find(
     @param.filter(Request) filter?: Filter<Request>,
-  ): Promise<Request[]> {
-    return this.requestRepository.find(filter);
+  ): Promise<any[]> {
+    /*
+    if (!this.requestRepository.dataSource.connected) {
+      console.log('in if condition... initialization not complete');
+      await this.requestRepository.dataSource.connect();
+    }
+    const _requestCollection = (this.requestRepository.dataSource.connector as any).collection('Request');
+    let filterStr = "{ \"match\" :" +JSON.stringify(filter!.where)+" }";
+    filterStr = filterStr
+      .replace("\"and\"","\"$and\"")
+      .replace("\"lt\":","\"$lt\":new Date(")
+      .replace("\"gt\":","\"$gt\":new Date(")
+      .replace(/GMT-0300"}}/g,"GMT-0300\")}}")
+    console.log(filterStr);
+
+    let query:any[] = [
+      {
+        $lookup: {
+          from: 'User',
+          localField: 'createdBy',
+          foreignField: 'rut',
+          as: 'createdByUser',
+        },
+      },
+      {
+        $addFields : {
+          statusDescription : {
+            $function: {
+              body: `function(estado){
+                if (estado=="0"){
+                  return "Abierto-Coordinador-Sin-Asignar";
+                }else if (estado=="1"){
+                  return "Abierto-Coordinador";
+                }else if (estado=="2"){
+                  return "Abierto-Analista-Sin-Asignar";
+                }else if (estado=="3"){
+                  return "Abierto-Analista";
+                }else if (estado=="4"){
+                  return "Abierto-Técnico";
+                }else if (estado=="5"){
+                  return "Cerrrado-Técnico";
+                }else if (estado=="6"){
+                  return "Abierto-Supervisor";
+                }else if (estado=="7"){
+                  return "Cerrado-Supervisor";
+                }else if (estado=="8"){
+                  return "Cerrado-Coordinador";
+                }
+              }`,
+              args: [ "$status"],
+              lang: "js"
+            }
+          } 
+        }
+      }
+    ];
+    query.push(JSON.parse(filterStr))
+    console.log( query )
+    let lmData = await _requestCollection.aggregate(query).get();
+    console.log('lmData:', lmData);
+    */
+
+    let requests = await this.requestRepository.find(filter);
+    let reports:any[]=[];
+    for (let i = 0; i < requests.length; i ++){
+      let user = await this.userRepository.findOne({ where : { rut : requests[i].createdBy }});
+      reports.push({
+        request : requests[i],
+        createdByUser : user,
+      });
+    }
+    return reports;
   }
 
   @get('/request/{id}', {
@@ -186,14 +257,6 @@ export class RequestController {
     requestEntity.assigToRole = request.assigToRole
     requestEntity.updatedAt=new Date();
     await this.requestRepository.updateById(idParameter, requestEntity);
-
-    /*
-    const result = await this.requestRepository.execute(
-      'Request', 'bulkWrite', [
-        { updateOne: { filter: {_id: "ObjectId(\""+idParameter+"\")"}, update: {$push: {tracks : request } } } }
-      ]
-    );
-*/
   }
 
   @put('/request/send/{id}', {
