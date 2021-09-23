@@ -15,6 +15,11 @@ export class Coordinator extends SlugEntityTitle {
     coordinator: string;
 
     @property({
+      type: 'string'
+    })
+    coordinatorName: string;
+
+    @property({
       type: 'string',
     })
     createdBy: string;    

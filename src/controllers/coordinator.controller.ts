@@ -56,6 +56,8 @@ export class CoordinatorController {
   ): Promise<Coordinator> {
     const rut = currentUserProfile[securityId];
     coordinator.createdBy = rut;
+    let user = await this.userRepository.findOne({ where : { rut :coordinator.coordinator }});
+    coordinator.coordinatorName = user?.name + " " + user?.lastName;
     return this.coordinatorRepository.create(coordinator);
   }
   
@@ -133,6 +135,7 @@ export class CoordinatorController {
     coordinatorTemp.createdBy = coordinator.createdBy;
     coordinatorTemp.id = coordinator.id;
     coordinatorTemp.coordinator = coordinator.coordinator;
+    coordinatorTemp.coordinatorName = coordinator.coordinatorName;
     coordinatorTemp.subordinates = coordinator.subordinates;
     await this.coordinatorRepository.updateById(coordinatorTemp.id, coordinatorTemp);
   }
@@ -148,5 +151,4 @@ export class CoordinatorController {
   async deleteById(@param.path.string('id') id: string): Promise<void> {
     await this.coordinatorRepository.deleteById(id);
   }
-
 }
