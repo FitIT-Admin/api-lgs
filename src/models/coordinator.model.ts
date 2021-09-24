@@ -10,14 +10,14 @@ export class Coordinator extends SlugEntityTitle {
     id: string;
     
     @property({
-        type: 'string'
+      type: 'string'
     })
-    name: string;
-    
+    coordinator: string;
+
     @property({
       type: 'string'
     })
-    coordinatorId: string;
+    coordinatorName: string;
 
     @property({
       type: 'string',
