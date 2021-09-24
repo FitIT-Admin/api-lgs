@@ -30,8 +30,8 @@ import {
 
   UserServiceBindings
 } from '../keys';
-import {Role, User, UserScore} from '../models';
-import {AuditActionsRepository, AuditAuthenticationRepository, Credentials, RecoverPasswordRepository, UserRepository, RoleRepository, UserScoreRepository} from '../repositories';
+import {Role, User, UserScore, UserScoreDetail} from '../models';
+import {AuditActionsRepository, AuditAuthenticationRepository, Credentials, RecoverPasswordRepository, UserRepository, RoleRepository, UserScoreRepository, UserScoreDetailRepository} from '../repositories';
 import {EmailManager} from '../services/email.service';
 import {PasswordHasher} from '../services/hash.password.bcryptjs';
 import {registerAuditAction, registerAuditAuth} from '../services/validator';
@@ -50,6 +50,7 @@ export class UserScoreController {
     @repository(AuditActionsRepository) public auditActionsRepository: AuditActionsRepository,
     @repository(RoleRepository) public roleRepository: RoleRepository,
     @repository(UserScoreRepository) public userScoreRepository: UserScoreRepository,
+    @repository(UserScoreDetailRepository) public userScoreDetailRepository: UserScoreDetailRepository,
     @inject(PasswordHasherBindings.PASSWORD_HASHER) public passwordHasher: PasswordHasher,
     @inject(TokenServiceBindings.TOKEN_SERVICE) public jwtService: TokenService,
     @inject(TokenServiceBindings.TOKEN_EXPIRES_IN) private jwtExpiresIn: string,
@@ -152,5 +153,54 @@ export class UserScoreController {
     }
   }
 
+ 
+@get('/user-score/bydate/{codigo_andes}/{codigo_tango}/{periodo}', {
+    responses: {
+      '200': {
+        description: 'Region model instance',
+        content: {
+          'application/json': {
+            schema: getModelSchemaRef(UserScoreDetail, {includeRelations: false}),
+          },
+        },
+      },
+    },
+  })
+  @authenticate('jwt')
+  async findByDate(
+    @param.path.string('codigo_andes') codigo_andes: string,
+    @param.path.string('codigo_tango') codigo_tango: string,
+    @param.path.string('periodo') periodo: string
+  ): Promise<UserScoreDetail> {
+
+      try {
+        
+        var puntos: any = [];
+        puntos.push(await this.userScoreDetailRepository.find(
+            { where: 
+                {
+                    CODIGO: codigo_andes,
+                    FECHAFIN: periodo
+                },
+                order: ["id DESC"],
+                }));
+        puntos.push(await this.userScoreDetailRepository.find(
+            { where: 
+                {
+                    CODIGO: codigo_tango,
+                    FECHAFIN: periodo
+                },
+                order: ["id DESC"],
+                }));
+                
+        if (puntos) {
+          return puntos;
+}
+      throw new HttpErrors.Unauthorized();
+    } catch (ex) {
+      console.log(ex);
+      throw new HttpErrors.Unauthorized();
+    }
+  }
  
 }
