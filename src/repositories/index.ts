@@ -20,3 +20,4 @@ export * from './request.repository';
 export * from './work-order.repository';
 export * from './coordinator.repository';
 export * from './user-score.repository';
+export * from './user-score-detail.repository';
