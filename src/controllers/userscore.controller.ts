@@ -124,28 +124,55 @@ export class UserScoreController {
     @param.path.string('codigo_tango') codigo_tango: string,
   ): Promise<UserScore> {
       try {
+      
+          var puntos: any = [];
+      
+            var match =
+            [
+                {
+                    $match: {
+                        $or: [
+                            {
+                                codigo: codigo_andes
+                            }, {
+                                codigo: codigo_tango
+                            }
+                        ]
+                    }
+                }, {
+                    $group: {
+                        _id: {
+                            periodo: '$periodo'
+                        }, 
+                        puntosVTR: {
+                            $sum: '$puntosVTR'
+                        }, 
+                        puntosAS: {
+                            $sum: '$puntosAS'
+                        }, 
+                        cuenta: {
+                            $sum: '$cuenta'
+                        }
+                    }
+                }, {
+                    $sort: {
+                        '_id.periodo': 1
+                    }
+                }
+            ];
+
+
+        const userScoreDetail = (this.userScoreDetailRepository.dataSource.connector as any).collection("UserScore");
         
-        var puntos: any = [];
-        puntos.push(await this.userScoreRepository.find(
-            { where: 
-                {
-                    codigo: codigo_andes
-                },
-                order: ["id DESC"],
-                /*limit: 1*/
-                }));
-        puntos.push(await this.userScoreRepository.find(
-            { where: 
-                {
-                    codigo: codigo_tango
-                },
-                order: ["id DESC"],
-                /*limit: 1*/
-                }));
+        puntos.push(await userScoreDetail
+            .aggregate(
+             match
+        ).get());
 
         if (puntos) {
           return puntos;
         } 
+        
       throw new HttpErrors.Unauthorized();
     } catch (ex) {
       console.log(ex);
@@ -160,7 +187,7 @@ export class UserScoreController {
         description: 'Region model instance',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(UserScoreDetail, {includeRelations: false}),
+            schema: getModelSchemaRef(UserScoreDetail, {includeRelations: true}),
           },
         },
       },
@@ -177,22 +204,16 @@ export class UserScoreController {
         
         var puntos: any = [];
         puntos.push(await this.userScoreDetailRepository.find(
-            { where: 
-                {
-                    CODIGO: codigo_andes,
-                    FECHAFIN: periodo
-                },
-                order: ["id DESC"],
-                }));
-        puntos.push(await this.userScoreDetailRepository.find(
-            { where: 
-                {
-                    CODIGO: codigo_tango,
-                    FECHAFIN: periodo
-                },
-                order: ["id DESC"],
-                }));
-                
+            { where: {
+            "and": [
+                { "or": [ { "CODIGO": codigo_andes }, { "CODIGO": codigo_tango } ]
+            }, {
+            "and": [ { "FECHAFIN": periodo } ]
+            }]
+        },
+            order: ["id DESC"]
+            }));
+        
         if (puntos) {
           return puntos;
 }
