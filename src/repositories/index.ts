@@ -21,3 +21,4 @@ export * from './work-order.repository';
 export * from './coordinator.repository';
 export * from './user-score.repository';
 export * from './user-score-detail.repository';
+export * from './claimed-points-ndc.repository';
