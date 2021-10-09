@@ -142,8 +142,11 @@ export class UserScoreController {
                 }, {
                     $group: {
                         _id: {
-                            periodo: '$periodo'
-                        }, 
+                            periodo: {
+                                $dateFromString: {
+                                 dateString: '$periodo'
+                            }
+                        }}, 
                         puntosVTR: {
                             $sum: '$puntosVTR'
                         }, 
