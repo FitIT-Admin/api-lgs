@@ -39,7 +39,8 @@ export class MyAuthenticationSequence implements SequenceHandler {
       const args = await this.parseParams(request, route);
       const result = await this.invoke(route, args);
       this.send(response, result);
-    } catch (error) {
+    } catch (err: unknown) {
+      const error = err as any;
       Sentry.captureException(error);
       if (
         error.code === AUTHENTICATION_STRATEGY_NOT_FOUND ||

@@ -21,4 +21,4 @@ export * from './work-order.model';
 export * from './coordinator.model';
 export * from './user-score.model';
 export * from './user-score-detail.model';
-export * from './claimed-points-ndc.model';
+export * from './claimed-points-ndc.model';export * from './referer.model';

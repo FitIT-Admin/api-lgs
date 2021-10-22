@@ -47,8 +47,9 @@ export class UserRepository extends DefaultCrudRepository<
   ): Promise<UserCredentials | undefined> {
     try {
       return await this.userCredentials(rut).get();
-    } catch (err) {
-      if (err.code === 'ENTITY_NOT_FOUND') {
+    } catch (err: unknown) {
+      const error = err as any;
+      if (error.code === 'ENTITY_NOT_FOUND') {
         return undefined;
       }
       throw err;

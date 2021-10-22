@@ -44,7 +44,8 @@ export class JWTService implements TokenService {
           roles: decodedToken.roles,
         },
       );
-    } catch (error) {
+    } catch (err: unknown) {
+      const error = err as any;
       throw new HttpErrors.Unauthorized(
         `Error verifying token : ${error.message}`,
       );
