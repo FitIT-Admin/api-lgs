@@ -120,7 +120,7 @@ export class ApiNielsenApplication extends BootMixin(
    */
     protected configureFileUpload(destination?: string) {
       // Upload files to `dist/.sandbox` by default
-      destination = destination ?? path.join(__dirname, '../public/uploads');
+      destination = destination ?? path.join(__dirname, '../public/referidos/promotions');
       this.bind(STORAGE_DIRECTORY).to(destination);
       const multerOptions: multer.Options = {
         storage: multer.diskStorage({

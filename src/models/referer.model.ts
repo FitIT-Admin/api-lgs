@@ -69,7 +69,13 @@ export class Referer extends TimestampEntity {
   @property({
     type: 'string',
   })
+  promotion: string;
+
+  @property({
+    type: 'string',
+  })
   referent: string;
+
 
   // Define well-known properties here
 

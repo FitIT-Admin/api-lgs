@@ -150,13 +150,13 @@ export class RefererController {
     await this.refererRepository.replaceById(id, referer);
   }
 
-  @del('/referers/{rut}')
+  @del('/referers/{id}')
   @response(204, {
     description: 'Referer DELETE success',
   })
   @authenticate('jwt')
-  async deleteById(@param.path.string('rut') rut: string): Promise<void> {
-    const referer = await this.refererRepository.find({ where : { rut : rut}});
+  async deleteById(@param.path.string('id') id: string): Promise<void> {
+    const referer = await this.refererRepository.find({ where : { id : id}});
     await this.refererRepository.deleteById(referer[0].id);
   }
 }
