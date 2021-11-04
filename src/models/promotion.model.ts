@@ -19,7 +19,19 @@ export class Promotion extends TimestampEntity {
     type: 'number',
     required: true,
   })
+  serviceType: number;
+
+  @property({
+    type: 'number',
+    required: true,
+  })
   service: number;
+
+  @property({
+    type: 'number',
+    required: false,
+  })
+  profit?: number;
   
   @property({
     type: 'string'

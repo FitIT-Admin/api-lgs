@@ -113,7 +113,7 @@ export class RefererController {
   })
   @authenticate('jwt')
   async findById(
-    @param.path.number('id') id: string,
+    @param.path.string('id') id: string,
     @param.filter(Referer, {exclude: 'where'}) filter?: FilterExcludingWhere<Referer>
   ): Promise<Referer> {
     return this.refererRepository.findById(id, filter);
