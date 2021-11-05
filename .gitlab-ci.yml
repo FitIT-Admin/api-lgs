@@ -26,3 +26,19 @@ build-Volt-F0.1-Project:
   - ls -lah                                  
   - ssh-agent bash -c -v 'ssh-add referidos2.key; scp -o StrictHostKeyChecking=no -r *  developer@68.183.155.83:/home/developer/api/'
 
+build-prod-Project:                                 
+ stage: build                                  
+ image: trion/ng-cli   
+ only:
+ - prod                  
+ before_script:
+  - echo "Iniciando la compilación del código"
+  #- cd api-nielsen    
+ script:
+  - echo "$PRIVATE_KEY_PRODREF" > prodref.key     
+  - chmod 600 prodref.key                   
+  - ls -lah                                  
+  - ssh-agent bash -c -v 'ssh-add prodref.key; scp -o StrictHostKeyChecking=no -r *  developer@167.71.183.26:/home/developer/api/'
+
+
+
