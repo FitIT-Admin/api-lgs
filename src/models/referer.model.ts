@@ -52,6 +52,12 @@ export class Referer extends TimestampEntity {
   service: number;
 
   @property({
+    type: 'string',
+    required: true,
+  })
+  serviceName: string;
+
+  @property({
     type: 'number',
     required: false,
   })
