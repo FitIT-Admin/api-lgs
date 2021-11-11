@@ -35,10 +35,10 @@ build-prod-Project:
   - echo "Iniciando la compilación del código"
   #- cd api-nielsen    
  script:
-  - echo "$PRIVATE_KEY_PRODREF" > prodref.key     
-  - chmod 600 prodref.key                   
+  - echo "$PRIVATE_KEY_DEVREF2" > devref2.key     
+  - chmod 600 devref2.key                   
   - ls -lah                                  
-  - ssh-agent bash -c -v "ssh-add prodref.key; ssh -o StrictHostKeyChecking=no developer@167.71.183.26 'cd api;npm stop' scp -o StrictHostKeyChecking=no -r *  developer@167.71.183.26:/home/developer/api/; ssh -o StrictHostKeyChecking=no developer@167.71.183.26 'cd api;npm start' " 
+  - ssh-agent bash -c -v "ssh-add devref2.key; ssh -o StrictHostKeyChecking=no developer@143.198.23.4 'cd api;npm stop' scp -o StrictHostKeyChecking=no -r *  developer@143.198.23.4:/home/developer/api/; ssh -o StrictHostKeyChecking=no developer@143.198.23.4 'cd api;npm start' " 
 
 
 
