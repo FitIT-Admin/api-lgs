@@ -1,44 +1,17 @@
-build-dev-Project:                                 
+build-Volt-F0.3-Project:                                 
  stage: build                                  
  image: trion/ng-cli   
  only:
- - dev                        
+ - Volt-F0.3                      
  before_script:
   - echo "Iniciando la compilación del código"
   #- cd api-nielsen    
  script:
-  - echo "$PRIVATE_KEY_FBDEVREFERIDOS" > fbdevreferidos.key     
-  - chmod 600 fbdevreferidos.key                   
+  - echo "$PRIVATE_KEY_DEVREF3" > devref3.key     
+  - chmod 600 devref3.key                   
   - ls -lah                                  
-  - ssh-agent bash -c -v "ssh-add fbdevreferidos.key; ssh -o StrictHostKeyChecking=no developer@104.131.88.16 'cd api;npm stop'; scp -o StrictHostKeyChecking=no -r *  developer@104.131.88.16:/home/developer/api/; ssh -o StrictHostKeyChecking=no developer@104.131.88.16 'cd api;npm start'" 
+  - ssh-agent bash -c -v "ssh-add devref3.key; ssh -o StrictHostKeyChecking=no developer@143.198.16.105 'cd api;npm stop'; scp -o StrictHostKeyChecking=no -r *  developer@143.198.16.105:/home/developer/api/; ssh -o StrictHostKeyChecking=no developer@143.198.16.105 'cd api;npm start'" 
 
-build-Volt-F0.1-Project:                                 
- stage: build                                  
- image: trion/ng-cli   
- only:
- - Volt-F0.1                    
- before_script:
-  - echo "Iniciando la compilación del código"
-  #- cd api-nielsen    
- script:
-  - echo "$PRIVATE_KEY_REFERIDOS2" > referidos2.key     
-  - chmod 600 referidos2.key                   
-  - ls -lah                                  
-  - ssh-agent bash -c -v 'ssh-add referidos2.key; scp -o StrictHostKeyChecking=no -r *  developer@68.183.155.83:/home/developer/api/'
-
-build-prod-Project:                                 
- stage: build                                  
- image: trion/ng-cli   
- only:
- - prod                  
- before_script:
-  - echo "Iniciando la compilación del código"
-  #- cd api-nielsen    
- script:
-  - echo "$PRIVATE_KEY_DEVREF2" > devref2.key     
-  - chmod 600 devref2.key                   
-  - ls -lah                                  
-  - ssh-agent bash -c -v "ssh-add devref2.key; ssh -o StrictHostKeyChecking=no developer@143.198.23.4 'cd api;npm stop' scp -o StrictHostKeyChecking=no -r *  developer@143.198.23.4:/home/developer/api/; ssh -o StrictHostKeyChecking=no developer@143.198.23.4 'cd api;npm start' " 
 
 
 
