@@ -7,10 +7,10 @@ build-Volt-F0.3-Project:
   - echo "Iniciando la compilación del código"
   #- cd api-nielsen    
  script:
-  - echo "$PRIVATE_KEY_DEVREF3" > devref3.key     
-  - chmod 600 devref3.key                   
+  - echo "$PRIVATE_KEY_DEVREFCUBA" > devrefcuba.key     
+  - chmod 600 devrefcuba.key                   
   - ls -lah                                  
-  - ssh-agent bash -c -v "ssh-add devref3.key; ssh -o StrictHostKeyChecking=no developer@143.198.16.105 'cd api;npm stop'; scp -o StrictHostKeyChecking=no -r *  developer@143.198.16.105:/home/developer/api/; ssh -o StrictHostKeyChecking=no developer@143.198.16.105 'cd api;npm start'" 
+  - ssh-agent bash -c -v "ssh-add devrefcuba.key; ssh -o StrictHostKeyChecking=no developer@143.198.16.105 'cd api;npm stop'; scp -o StrictHostKeyChecking=no -r *  developer@143.198.16.105:/home/developer/api/; ssh -o StrictHostKeyChecking=no developer@143.198.16.105 'cd api;npm start'" 
 
 
 
