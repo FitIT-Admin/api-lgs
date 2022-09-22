@@ -1,4 +1,4 @@
-build-Volt-F0.3-Project:                                 
+build-dev-Project:                                 
  stage: build                                  
  image: trion/ng-cli   
  only:
