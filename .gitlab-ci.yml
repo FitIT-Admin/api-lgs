@@ -12,6 +12,36 @@ build-dev-Project:
   - ls -lah                                  
   - ssh-agent bash -c -v "ssh-add subdev.key; ssh -o StrictHostKeyChecking=no developer@138.197.2.119 'cd api;npm stop'; scp -o StrictHostKeyChecking=no -r *  developer@138.197.2.119:/home/developer/api/; ssh -o StrictHostKeyChecking=no developer@138.197.2.119 'cd api;npm start'" 
 
+build-Lux1-Project:                                 
+ stage: build                                  
+ image: trion/ng-cli   
+ only:
+ - Lux1                    
+ before_script:
+  - echo "Iniciando la compilación del código"
+  #- cd api-nielsen    
+ script:
+  - echo "$PRIVATE_KEY_SUBDEV" > subdev.key     
+  - chmod 600 subdev.key                   
+  - ls -lah                                  
+  - ssh-agent bash -c -v "ssh-add subdev.key; ssh -o StrictHostKeyChecking=no developer@138.197.2.119 'cd api;npm stop'; scp -o StrictHostKeyChecking=no -r *  developer@138.197.2.119:/home/developer/api/; ssh -o StrictHostKeyChecking=no developer@138.197.2.119 'cd api;npm start'"
+
+build-Lux2-Project:                                 
+ stage: build                                  
+ image: trion/ng-cli   
+ only:
+ - Lux2                   
+ before_script:
+  - echo "Iniciando la compilación del código"
+  #- cd api-nielsen    
+ script:
+  - echo "$PRIVATE_KEY_SUBDEV" > subdev.key     
+  - chmod 600 subdev.key                   
+  - ls -lah                                  
+  - ssh-agent bash -c -v "ssh-add subdev.key; ssh -o StrictHostKeyChecking=no developer@138.197.2.119 'cd api;npm stop'; scp -o StrictHostKeyChecking=no -r *  developer@138.197.2.119:/home/developer/api/; ssh -o StrictHostKeyChecking=no developer@138.197.2.119 'cd api;npm start'"
+
+
+
 
 
 
