@@ -14,10 +14,16 @@ import {User, UserCredentials} from '../models';
 import {UserCredentialsRepository} from './user-credentials.repository';
 
 export type Credentials = {
-  rut: string;
+  email: string;
   password: string;
 };
-
+export type RegisterCredentials = {
+  email: string;
+  name: string;
+  lastName: string;
+  typeUser: string;
+  password: string;
+};
 
 export class UserRepository extends DefaultCrudRepository<
   User,
@@ -43,10 +49,12 @@ export class UserRepository extends DefaultCrudRepository<
   }
 
   async findCredentials(
-    rut: typeof User.prototype.id,
+    email: typeof User.prototype.id,
   ): Promise<UserCredentials | undefined> {
     try {
-      return await this.userCredentials(rut).get();
+      console.log("findCredentials");
+      console.log(email);
+      return await this.userCredentials(email).get();
     } catch (err: unknown) {
       const error = err as any;
       if (error.code === 'ENTITY_NOT_FOUND') {

@@ -7,7 +7,7 @@ export const UserProfileSchema = {
   required: ['id'],
   properties: {
     id: {type: 'string'},
-    rut: {type: 'string'},
+    email: {type: 'string'},
     name: {type: 'string'},
   },
 };
@@ -19,22 +19,50 @@ export const UserProfileSchema = {
 
 const CredentialsSchema: SchemaObject = {
   type: 'object',
-  required: ['rut', 'password'],
+  required: ['email', 'password'],
   properties: {
-    rut: {
+    email: {
       type: 'string'
     },
     password: {
-      type: 'string',
-      minLength: 4,
+      type: 'string'
     },
   },
 };
+const RegisterSchema: SchemaObject = {
+  type: 'object',
+  required: ['email', 'name', 'lastName', 'typeUser', 'password'],
+  properties: {
+    email: {
+      type: 'string'
+    },
+    name: {
+      type: 'string'
+    },
+    lastName: {
+      type: 'string'
+    },
+    typeUser: {
+      type: 'string'
+    },
+    password: {
+      type: 'string'
+    },
+  },
+}
 
 export const CredentialsRequestBody = {
   description: 'The input of login function',
   required: true,
   content: {
     'application/json': {schema: CredentialsSchema},
+  },
+};
+
+export const RegisterRequestBody = {
+  description: 'The input of login function',
+  required: true,
+  content: {
+    'application/json': {schema: RegisterSchema},
   },
 };

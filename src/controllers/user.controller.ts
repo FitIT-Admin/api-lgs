@@ -29,13 +29,13 @@ import {
 
   UserServiceBindings
 } from '../keys';
-import {Role, User} from '../models';
-import {AuditActionsRepository, AuditAuthenticationRepository, Credentials, RecoverPasswordRepository, UserRepository, RoleRepository} from '../repositories';
+import {Role, User, UserCredentials} from '../models';
+import {AuditActionsRepository, AuditAuthenticationRepository, Credentials, RecoverPasswordRepository, UserRepository, RoleRepository, RegisterCredentials, UserCredentialsRepository} from '../repositories';
 import {EmailManager} from '../services/email.service';
 import {PasswordHasher} from '../services/hash.password.bcryptjs';
 import {registerAuditAction, registerAuditAuth} from '../services/validator';
 import {
-  CredentialsRequestBody
+  CredentialsRequestBody, RegisterRequestBody
 } from './specs/user-controller.specs';
 
 const jwt = require('jsonwebtoken');
@@ -54,6 +54,7 @@ export class UserController {
     @repository(AuditAuthenticationRepository) public auditAuthenticationRepository: AuditAuthenticationRepository,
     @repository(AuditActionsRepository) public auditActionsRepository: AuditActionsRepository,
     @repository(RoleRepository) public roleRepository: RoleRepository,
+    @repository(UserCredentialsRepository) public userCredentialsRepository: UserCredentialsRepository,
     @inject(PasswordHasherBindings.PASSWORD_HASHER) public passwordHasher: PasswordHasher,
     @inject(TokenServiceBindings.TOKEN_SERVICE) public jwtService: TokenService,
     @inject(TokenServiceBindings.TOKEN_EXPIRES_IN) private jwtExpiresIn: string,
@@ -225,15 +226,14 @@ export class UserController {
   })
   @authenticate('jwt')
   async current(@inject(SecurityBindings.USER) currentUserProfile: UserProfile): Promise<Object> {
-    const rut = currentUserProfile[securityId];
-    var user = await this.userRepository.findOne({where: {rut: rut}});
+    const email = currentUserProfile[securityId];
+    var user = await this.userRepository.findOne({where: {email: email}});
     if (user){
       const role = await this.findRoleSlugOrId(user.role);
 
       return {
-        rut: user.rut,
-        name: user.name + " " + user.lastName,
         email: user.email,
+        name: user.name + " " + user.lastName,
         role: {
           slug: role.slug,
           name: role.title
@@ -267,30 +267,98 @@ export class UserController {
     @requestBody(CredentialsRequestBody) credentials: Credentials,
   ): Promise<Object> {
 
-    var user = await this.userRepository.findOne({where: {rut: credentials.rut}});
+    var user = await this.userRepository.findOne({where: {email: credentials.email}});
+    console.log(user);
     if (user){
       const role = await this.findRoleSlugOrId(user.role);
+      console.log("hola1");
+      console.log(credentials);
       const verifyUser = await this.userService.verifyCredentials(credentials);
+      console.log("hola2");
       const userProfile = this.userService.convertToUserProfile(verifyUser);
+      console.log("hola3");
       const token = await this.jwtService.generateToken(userProfile);
+      console.log("hola4");
       await this.auditAuthenticationRepository.create(registerAuditAuth(verifyUser.id, 1));
+      console.log("hola5");
+      console.log(verifyUser);
+      console.log(userProfile);
+      console.log(token);
 
       return {
-        rut: user.rut,
-        rutJefe : user.rutJefe,
         name: user.name + " " + user.lastName,
         email: user.email,
         role: {
           slug: role.slug,
           name: role.title
         },
-        privilege: role.privilege,
-        token: token,
-        cod_andes: user.cod_andes,
-        cod_tango: user.cod_tango
+        token: token
       };
     }
     throw new HttpErrors.Unauthorized("Usuario no registrado, favor contacte al administrador");    
+  }
+  @post('/users/regist', {
+    responses: {
+      '200': {
+        description: 'NewUser',
+      },
+    },
+  })
+  //@authenticate('jwt')
+  async regist(
+    //user: User,
+    @requestBody(RegisterRequestBody) credentials: RegisterCredentials,
+  ): Promise<any> {
+    try {
+      const users = await this.userRepository.find( { where : { email : credentials.email }});
+      if (users.length == 0) {
+        const previousCredentials = await this.userCredentialsRepository.find({where: {userId: credentials.email}});
+        if (previousCredentials.length > 0) {
+          await this.userCredentialsRepository.deleteById(previousCredentials[0].id);
+        }
+        // encrypt the password
+        const password = await this.passwordHasher.hashPassword(
+          credentials.password,
+        );
+        // separar apellidos
+        var lastNames = credentials.lastName.split(' ')
+        var lastName;
+        var secondLastName;
+        if (lastNames.length > 1) {
+          lastName = lastNames[0];
+          secondLastName = lastNames[1]
+        }
+        else {
+          lastName = credentials.lastName;
+          secondLastName = credentials.lastName;
+        }
+        // Crear user
+        var user = new User;
+        var userCredentials = new UserCredentials;
+        user.email = credentials.email;
+        user.name = credentials.name;
+        user.lastName = lastName;
+        user.secondLastName = secondLastName;
+        user.role = credentials.typeUser;
+        user.companies = [];
+        user.failedAttempts = 0;
+        user.status = 0;
+        var newUser = await this.userRepository.create(user);
+        // Crear credenciales de user
+        userCredentials.userId = newUser.email;
+        userCredentials.password = password;
+        var newUserCredentials = await this.userCredentialsRepository.create(userCredentials);
+        // Registro de creacion de usuario y credenciales
+        await this.auditActionsRepository.create(registerAuditAction(newUser.id, "Creacion de Usuario y credenciales"));
+        return true;
+      } else {
+        throw new HttpErrors.Conflict('errors.unathorized');
+      }
+    } catch (ex) {
+      console.log(ex);
+      throw new HttpErrors.Conflict('sign-in.dntexist');
+    }
+    
   }
 
   @get('/users/logged-in', {

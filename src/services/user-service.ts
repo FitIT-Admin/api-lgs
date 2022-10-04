@@ -25,15 +25,13 @@ export class MyUserService implements UserService<User, Credentials> {
   ) { }
 
   async verifyCredentials(credentials: Credentials): Promise<User> {
-
+    console.log("verifyCredentials");
     const foundUser = await this.userRepository.findOne({
-      where: {rut: credentials.rut},
+      where: {email: credentials.email},
     });
 
     if (!foundUser) {
       throw new HttpErrors.Unauthorized("sign-in.dntexist");
-    } else if (foundUser.status == 0) {
-      throw new HttpErrors.Unauthorized("sign-in.activation_required");
     } else if (foundUser.status == 2) {
       throw new HttpErrors.Unauthorized("sign-in.bloqued");
     } else if (foundUser.status == 3) {
@@ -41,12 +39,13 @@ export class MyUserService implements UserService<User, Credentials> {
     } else if (foundUser.status == 5) {
       throw new HttpErrors.Unauthorized("sign-in.withoutcred");
     } else {
-      const credentialsFound = await this.userRepository.findCredentials(foundUser.rut);
+      const credentialsFound = await this.userRepository.findCredentials(foundUser.email);
+      console.log(credentialsFound);
       if (!credentialsFound) {
         throw new HttpErrors.Unauthorized("sign-in.withoutcred");
       }
 
-      if (foundUser.status == 1) {
+      if (foundUser.status == 1 || foundUser.status == 0) {
         const passwordMatched = await this.passwordHasher.comparePassword(
           credentials.password,
           credentialsFound.password,
@@ -85,10 +84,9 @@ export class MyUserService implements UserService<User, Credentials> {
         ? `${userName} ${user.lastName}`
         : `${user.lastName}`;
     const userProfile = {
-      [securityId]: user.rut,
+      [securityId]: user.email,
       name: userName,
-      id: user.rut,
-      roles: user.roles,
+      id: user.email
     };
 
     return userProfile;
