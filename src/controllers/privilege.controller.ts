@@ -56,8 +56,8 @@ export class PrivilegeController {
     })
     privilege: Omit<Privilege, 'id'>,
   ): Promise<Privilege> {
-    const rut = currentUserProfile[securityId];
-    privilege.createdBy = rut;
+    const email = currentUserProfile[securityId];
+    privilege.createdBy = email;
     return this.privilegeRepository.create(privilege);
   }
 
@@ -114,7 +114,7 @@ export class PrivilegeController {
   async findById(
     @param.path.string('slug') slug: string): Promise<Privilege> {
     var privilege = await this.findSlugOrId(slug);
-    const user = await this.userRepository.find({ where : { rut : privilege.createdBy}});
+    const user = await this.userRepository.find({ where : { email : privilege.createdBy}});
     privilege.createdBy = user[0].name + " " + user[0].lastName  + " " + user[0].secondLastName
     return privilege;
   }

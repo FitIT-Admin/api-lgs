@@ -57,8 +57,8 @@ export class RoleController {
     })
     role: Omit<Role, 'id'>,
   ): Promise<Role> {
-    const rut = currentUserProfile[securityId];
-    role.createdBy = rut;
+    const email = currentUserProfile[securityId];
+    role.createdBy = email;
     return this.roleRepository.create(role);
   }
 
@@ -115,7 +115,7 @@ export class RoleController {
   async findById(
     @param.path.string('slug') slug: string): Promise<Role> {
     var role = await this.findSlugOrId(slug);
-    const user = await this.userRepository.find({ where : { rut : role.createdBy}});
+    const user = await this.userRepository.find({ where : { email : role.createdBy}});
     role.createdBy = user[0].name + " " + user[0].lastName  + " " + user[0].secondLastName
     return role;
   }

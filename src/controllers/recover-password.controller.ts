@@ -227,7 +227,7 @@ export class RecoverPasswordController {
       },
     },
   })
-  async setPassword(@requestBody(CredentialsRequestBody) credentials: Credentials): Promise<Boolean> {
+  /*async setPassword(@requestBody(CredentialsRequestBody) credentials: Credentials): Promise<Boolean> {
 
     try {
 
@@ -259,9 +259,9 @@ export class RecoverPasswordController {
       console.log(ex);
       throw new HttpErrors.Conflict('sign-in.dntexist');
     }
-  }
+  }*/
 
-  @put('/recover-passwords/update', {
+  /*@put('/recover-passwords/update', {
     responses: {
       '200': {
         description: 'User',
@@ -329,9 +329,9 @@ export class RecoverPasswordController {
     } catch (ex) {
       throw new HttpErrors.Conflict('sign-in.dntexist');
     }
-  }
+  }*/
 
-  @get('/recover-passwords/check/{hash}', {
+/*@get('/recover-passwords/check/{hash}', {
     responses: {
       '200': {
         content: {
@@ -362,7 +362,7 @@ export class RecoverPasswordController {
     throw new HttpErrors.Conflict(
       `sign-in.token_invalid`,
     );
-  }
+  }*/
 
   async verifyToken(token: string): Promise<any> {
     if (!token) {
