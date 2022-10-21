@@ -23,7 +23,7 @@ export class EmailService {
     const dom = new JSDOM(contents);
     const document = dom.window.document;
     document.querySelector('#name').innerHTML = fullname;
-    document.querySelector('#token').href = process.env.FRONTEND_URL + "/activate/password/" + token;
+    document.querySelector('#token').href = process.env.FRONTEND_URL + "/auth/activate-password/" + token;
     return dom.serialize();
   }
 

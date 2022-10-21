@@ -4,7 +4,7 @@ import {DbDataSource} from '../datasources';
 import {RecoverPassword, RecoverPasswordRelations} from '../models';
 
 export type CredentialsChangePassword = {
-  rut: string;
+  email: string;
   password: string;
   hash: string;
 };
