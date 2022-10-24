@@ -66,17 +66,9 @@ export class RecoverPasswordController {
     recoverPassword: Omit<RecoverPassword, 'id'>,
   ): Promise<Object> {
 
-    // if (recoverPassword.rut.length < 9) {
-    //   recoverPassword.rut = completeZero(recoverPassword.rut);
-    // }
-
-    const userExists = await this.userRepository.find({where: {rut: recoverPassword.user}});
+    const userExists = await this.userRepository.find({where: {email: recoverPassword.user}});
     if (userExists.length == 0) {
       throw new HttpErrors.Conflict('sign-in.dntexist');
-    }
-
-    if (userExists[0].status == 0) {
-      throw new HttpErrors.Unauthorized("sign-in.activation_required");
     }
 
     if (userExists[0].status == 3) {
@@ -86,7 +78,7 @@ export class RecoverPasswordController {
     if (userExists[0].email == null || userExists[0].email == '') {
       throw new HttpErrors.Unauthorized("sign-in.not_email");
     } else {
-      const recoverExists = await this.recoverPasswordRepository.find({where: {user: userExists[0].rut, active: true}});
+      const recoverExists = await this.recoverPasswordRepository.find({where: {user: userExists[0].email, active: true}});
       if (recoverExists.length > 0) {
         recoverExists[0].active = false;
         await this.recoverPasswordRepository.updateById(recoverExists[0].id, recoverExists[0]);
@@ -95,10 +87,10 @@ export class RecoverPasswordController {
       try {
         let forgotPassword: RecoverPassword = new RecoverPassword();
         forgotPassword.active = true;
-        forgotPassword.user = userExists[0].rut;
+        forgotPassword.user = userExists[0].email;
         const recoverPassword = await this.recoverPasswordRepository.create(forgotPassword);
         let date = recoverPassword.createdAt?.toString() || new Date().toString()
-        token = await this.generateRecoverPassToken(userExists[0].rut, date, userExists[0].name, userExists[0].lastName);
+        token = await this.generateRecoverPassToken(userExists[0].email, date, userExists[0].name, userExists[0].lastName);
         recoverPassword.hash = token;
         await this.recoverPasswordRepository.updateById(recoverPassword.id, recoverPassword);
         if (userExists[0].email){
@@ -111,8 +103,7 @@ export class RecoverPasswordController {
       }
       await this.auditActionsRepository.create(registerAuditAction(userExists[0].id, "Solicita recuperacion de contraseña"));
       return {
-        email: userExists[0].email,
-        status: 1
+        email: userExists[0].email
       }
     }
   }
@@ -122,7 +113,7 @@ export class RecoverPasswordController {
       const msg = {
         to: email, // Change to your recipient
         from: process.env.SENDGRID_SENDER_FROM, 
-        subject: 'Nielsen Group - Recuperación de contraseña',
+        subject: 'Fit IT - Recuperación de contraseña',
         html: this.emailManager.getHTMLPasswordRecovery(fullname, token)
       }
       sgMail
@@ -135,7 +126,7 @@ export class RecoverPasswordController {
         })
   }
 
-  @get('/recover-passwords/check-activate/{rut}', {
+  @get('/recover-passwords/check-activate/{email}', {
     responses: {
       '200': {
         description: 'Array of Currency model instances',
@@ -150,9 +141,9 @@ export class RecoverPasswordController {
       },
     },
   })
-  async checkActivate(@param.path.string('rut') rut: string,
+  async checkActivate(@param.path.string('email') email: string,
   ): Promise<Boolean> {
-    const userExists = await this.userRepository.find({where: {rut: rut}});
+    const userExists = await this.userRepository.find({where: {email: email}});
     if (userExists.length == 0) {
       throw new HttpErrors.Conflict('sign-in.dntexist');
     }
@@ -227,41 +218,41 @@ export class RecoverPasswordController {
       },
     },
   })
-  /*async setPassword(@requestBody(CredentialsRequestBody) credentials: Credentials): Promise<Boolean> {
+  async setPassword(@requestBody(CredentialsRequestBody) credentials: Credentials): Promise<Boolean> {
 
     try {
 
-      const users = await this.userRepository.find( { where : { rut : credentials.rut }});
+      const users = await this.userRepository.find( { where : { email : credentials.email }});
       var user = users[0];
       if (user.status == 3) {
         throw new HttpErrors.Unauthorized("sign-in.desactivated");
       }
-      if (user.status == 0) {
-        const previousCredentials = await this.userCredentialsRepository.find({where: {userId: credentials.rut}});
-        if (previousCredentials.length > 0) {
-          await this.userCredentialsRepository.deleteById(previousCredentials[0].id);
-        }
-        // encrypt the password
-        const password = await this.passwordHasher.hashPassword(
-          credentials.password,
-        );
-
-        // set the password
-        await this.userRepository.userCredentials(user.rut).create({password});
-        user.status = 1;
-        await this.userRepository.updateById(user.id, user)
-        await this.auditActionsRepository.create(registerAuditAction(user.id, "Usuario cargado via script crea sus credenciales"));
-        return true;
-      } else {
-        throw new HttpErrors.Conflict('errors.unathorized');
+      //if (user.status == 0) {
+      const previousCredentials = await this.userCredentialsRepository.find({where: {userId: credentials.email}});
+      if (previousCredentials.length > 0) {
+        await this.userCredentialsRepository.deleteById(previousCredentials[0].id);
       }
+      // encrypt the password
+      const password = await this.passwordHasher.hashPassword(
+        credentials.password,
+      );
+
+      // set the password
+      await this.userRepository.userCredentials(user.email).create({password});
+      //user.status = 1;
+      await this.userRepository.updateById(user.id, user)
+      await this.auditActionsRepository.create(registerAuditAction(user.id, "Usuario cargado via script crea sus credenciales"));
+      return true;
+      /*} else {
+        throw new HttpErrors.Conflict('errors.unathorized');
+      }*/
     } catch (ex) {
       console.log(ex);
       throw new HttpErrors.Conflict('sign-in.dntexist');
     }
-  }*/
+  }
 
-  /*@put('/recover-passwords/update', {
+  @put('/recover-passwords/update', {
     responses: {
       '200': {
         description: 'User',
@@ -283,7 +274,7 @@ export class RecoverPasswordController {
     };
 
     try {
-      const user = await this.userRepository.findOne({ where: { rut : credentials.rut }});
+      const user = await this.userRepository.findOne({ where: { email : credentials.email }});
       if (user){
         if (user.status == 3) {
           throw new HttpErrors.Unauthorized("sign-in.desactivated");
@@ -291,26 +282,26 @@ export class RecoverPasswordController {
 
         decodeHash = await this.verifyToken(credentials.hash);
         try {
-          var recoverPassword = await this.recoverPasswordRepository.findOne({where: {hash: credentials.hash, active: 1, user: credentials.rut}});
-          if (recoverPassword != undefined && (credentials.rut != recoverPassword.user.toString() || credentials.hash != recoverPassword.hash)) {
+          var recoverPassword = await this.recoverPasswordRepository.findOne({where: {hash: credentials.hash, active: 1, user: credentials.email}});
+          if (recoverPassword != undefined && (credentials.email != recoverPassword.user.toString() || credentials.hash != recoverPassword.hash)) {
             throw new HttpErrors.Conflict(`sign-in.token_invalid`);
           }
 
-          if (recoverPassword != undefined && (user.status == 1 || user.status == 2)) {
+          if (recoverPassword != undefined && (user.status == 0 || user.status == 1)) {
             // encrypt the password
             const password = await this.passwordHasher.hashPassword(
               credentials.password,
             );
 
             // remove old password if exists
-            const previousCredentials = await this.userCredentialsRepository.find({where: {userId: credentials.rut}});
+            const previousCredentials = await this.userCredentialsRepository.find({where: {userId: credentials.email}});
             if (previousCredentials.length > 0) {
               await this.userCredentialsRepository.deleteById(previousCredentials[0].id);
             }
 
             // set the new password
-            await this.userRepository.userCredentials(credentials.rut).create({password});
-            user.status = 1;
+            await this.userRepository.userCredentials(credentials.email).create({password});
+            //user.status = 1;
             await this.userRepository.updateById(user.id, user);
             recoverPassword.active = false;
             await this.recoverPasswordRepository.updateById(recoverPassword.id, recoverPassword)
@@ -329,9 +320,9 @@ export class RecoverPasswordController {
     } catch (ex) {
       throw new HttpErrors.Conflict('sign-in.dntexist');
     }
-  }*/
+  }
 
-/*@get('/recover-passwords/check/{hash}', {
+@get('/recover-passwords/check/{hash}', {
     responses: {
       '200': {
         content: {
@@ -362,7 +353,7 @@ export class RecoverPasswordController {
     throw new HttpErrors.Conflict(
       `sign-in.token_invalid`,
     );
-  }*/
+  }
 
   async verifyToken(token: string): Promise<any> {
     if (!token) {
