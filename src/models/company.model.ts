@@ -3,36 +3,12 @@ import {UserCredentials} from '../models';
 import {TimestampEntity} from '../lib/timestamp-entity';
 
 @model()
-export class User extends TimestampEntity {
+export class Company extends TimestampEntity {
   @property({
     type: 'string',
     id: true,
   })
-  id: string;
-
-  @property({
-    type: 'string',
-    required: true,
-  })
-  email: string;
-
-  @property({
-    type: 'string',
-    required: true,
-  })
-  role: string;
-
-  @property({
-    type: 'string',
-    required: true,
-  })
-  lastName: string;
-
-  @property({
-    type: 'string',
-    required: true,
-  })
-  secondLastName: string;
+  rut: string;
 
   @property({
     type: 'string',
@@ -41,22 +17,40 @@ export class User extends TimestampEntity {
   name: string;
 
   @property({
-    type: 'number',
-
+    type: 'string',
+    required: true,
   })
-  failedAttempts: number;
+  direction: string;
+
+  @property({
+    type: 'string',
+    required: true,
+  })
+  phone: string;
 
   @property({
     type: 'number',
+    required: true,
+  })
+  accountNumber: number;
+
+  @property({
+    type: 'string',
+    required: true,
+  })
+  accountType: string;
+
+  @property({
+    type: 'string',
+    required: true,
+  })
+  bank: string;
+
+  @property({
+    type: 'number',
+    required: true,
   })
   status: number;
-
-  @property.array(Object)
-  companies: {rut: string, name: string, direction: string, phone: string, accountNumber: number, accountType: string, bank: string, status: number}[];
-
-  @hasOne(() => UserCredentials)
-  userCredentials: UserCredentials;
-
 
   // Define well-known properties here
 
@@ -64,13 +58,13 @@ export class User extends TimestampEntity {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [prop: string]: any;
 
-  constructor(data?: Partial<User>) {
+  constructor(data?: Partial<Company>) {
     super(data);
   }
 }
 
-export interface UserRelations {
+export interface CompanyRelations {
   // describe navigational properties here
 }
 
-export type UserWithRelations = User & UserRelations;
+export type CompanyWithRelations = Company & CompanyRelations;
