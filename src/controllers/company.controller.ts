@@ -30,7 +30,11 @@ import { User } from '../models';
       @repository(ServiceRepository) public serviceRepository : ServiceRepository,
       @repository(UserRepository) public userRepository: UserRepository,
     ) {}
-  
+      /**
+       * Crea un nuevo company para el usuario:
+       * @param user user con un company nuevo dentro del array companies
+       * @returns true en el caso en que el rut no este repetido, si es asi devuelve un error.
+       */
     @put('/companies', {
       responses: {
         '204': {
@@ -105,6 +109,8 @@ import { User } from '../models';
             }
             
           )
+          // Cambiar status a 1 si el usuario posee al menos una compañia
+          allCompaniesUser[0].status = 1;
           await this.userRepository.updateById(allCompaniesUser[0].id, allCompaniesUser[0]);
           return true;
         } else {
@@ -112,6 +118,12 @@ import { User } from '../models';
         }
         
     }
+    /**
+     * Actualiza o Edita un company:
+     * @param rut rut de company que se quiere editar
+     * @param user user con cambios de company
+     * @returns true en el caso de que se modificara correctamente el company
+     */
     @put('/companies/update/{rut}', {
       responses: {
         '204': {
@@ -143,7 +155,11 @@ import { User } from '../models';
         await this.userRepository.updateById(users[0].id, users[0]);
         return true;
     }
-  
+    /**
+     * Buscar companies count
+     * @param id email de usuario
+     * @returns la cantidad de companies que tiene el user
+     */
     @get('/companies/count/{id}')
     @response(200, {
       description: 'Company model count',
@@ -195,7 +211,11 @@ import { User } from '../models';
       }
       return 0;
     }
-  
+    /**
+     * Buscar companies:
+     * @param id email de usuario
+     * @returns user con companies distintos de status -1
+     */
     @get('/companies/{id}')
     @response(200, {
       description: 'Array of Company model instances',
@@ -241,12 +261,18 @@ import { User } from '../models';
           }
       }]
       const user = await users.aggregate(query).get();
-      //console.log(user);
+      //console.log(user[0]);
       if (user[0]) {
           return user[0];
       }
       return 0;
     }
+    /**
+     * Eliminar company:
+     * @param id email de usuario
+     * @param rut rut de company
+     * @returns true en el caso en que se eliminara correctamente
+     */
     @put('/companies/{id}/{rut}')
     @response(204, {
       description: 'Company DELETE success',
@@ -257,14 +283,71 @@ import { User } from '../models';
         @param.path.string('rut') rut: string
     ): Promise<any> {
         const users = await this.userRepository.find({ where : { email : id}});
+        // eliminar company igual al rut y distinto de -1
         for (let i=0; i < users[0].companies.length ; i++) {
-            if (users[0].companies[i].rut == rut) {
+            if (users[0].companies[i].rut == rut && users[0].companies[i].status != -1) {
                 users[0].companies[i].status = -1;
                 break;
             }
         }
-        await this.userRepository.updateById(users[0].id, users[0]);
-        return true;
+        const usersCollection = await (this.userRepository.dataSource.connector as any).collection("User");
+        const query = [{
+          $match: {
+              email: users[0].email
+            }
+        }, {
+          $project: {
+              _id: 1,
+              createdAt: 1,
+              updatedAt: 1,
+              email: 1,
+              role: 1,
+              lastName: 1,
+              secondLastName: 1,
+              name: 1,
+              failedAttempts: 1,
+              status: 1,
+              companies: {
+                  $filter: {
+                      input: '$companies',
+                      cond: {
+                          $ne: [
+                              '$$companies.status',
+                              -1
+                          ]
+                      },
+                      as: 'companies'
+                  }
+              }
+          }
+      }]
+      const user = await usersCollection.aggregate(query).get();
+      // Si el usuario no tiene compañias se le asigna status = 0
+      if (user[0].companies.length > 0) {
+        users[0].status = 0;
+      }
+      await this.userRepository.updateById(users[0].id, users[0]);
+      return true;
+    }
+    /**
+     * Buscar status de user:
+     * Se creo esta funcion para que el sistema conozca el status del usuario mientras se mueve dentro de la página
+     * @param email email de usuario
+     * @returns el status del usuario
+     */
+    @get('/status/user/{email}', {
+      responses: {
+        '204': {
+          description: 'User GET success',
+        },
+      },
+    })
+    @authenticate('jwt')
+    async searchStatusUser(
+      @param.path.string('email') email: string
+    ): Promise<any> {
+        const user = await this.userRepository.find({ where : { email : email}});
+        return user[0].status;
     }
   }
   
