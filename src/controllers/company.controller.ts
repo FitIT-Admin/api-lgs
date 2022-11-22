@@ -21,7 +21,7 @@ import {
   import {authenticate} from '@loopback/authentication';
   import { ServiceRepository } from '../repositories/service.repository';
   import { Service } from '../models/service.model';
-import { UserRepository } from '../repositories';
+import { OfferRepository, OrderRepository, UserRepository } from '../repositories';
 import { Company } from '../models/company.model';
 import { User } from '../models';
   export class CompanyController {
@@ -29,6 +29,8 @@ import { User } from '../models';
     constructor(
       @repository(ServiceRepository) public serviceRepository : ServiceRepository,
       @repository(UserRepository) public userRepository: UserRepository,
+      @repository(OrderRepository) public orderRepository: OrderRepository,
+      @repository(OfferRepository) public offerRepository: OfferRepository,
     ) {}
       /**
        * Crea un nuevo company para el usuario:
@@ -287,6 +289,24 @@ import { User } from '../models';
         for (let i=0; i < users[0].companies.length ; i++) {
             if (users[0].companies[i].rut == rut && users[0].companies[i].status != -1) {
                 users[0].companies[i].status = -1;
+                // Eliminar Orders/Offers
+                if (users[0].role == 'taller') {
+                  const orders = await this.orderRepository.find({where: {createBy: users[0].email, company: users[0].companies[i].rut}});
+                  if (orders.length > 0) {
+                    for(let j=0; j < orders.length ; j++) {
+                      orders[j].status = -1;
+                      await this.orderRepository.updateById(orders[j].id, orders[j]);
+                    }
+                  }
+                } else if(users[0].role == 'comercio') {
+                  const offers = await this.offerRepository.find({where: {createBy: users[0].email, company: users[0].companies[i].rut}});
+                  if (offers.length > 0) {
+                    for(let j=0; j < offers.length ; j++) {
+                      offers[j].status = -1;
+                      await this.offerRepository.updateById(offers[j].id, offers[j]);
+                    }
+                  }
+                }
                 break;
             }
         }
@@ -323,7 +343,7 @@ import { User } from '../models';
       }]
       const user = await usersCollection.aggregate(query).get();
       // Si el usuario no tiene compañias se le asigna status = 0
-      if (user[0].companies.length > 0) {
+      if (user[0].companies.length == 0) {
         users[0].status = 0;
       }
       await this.userRepository.updateById(users[0].id, users[0]);
