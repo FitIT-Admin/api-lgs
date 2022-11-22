@@ -23,3 +23,5 @@ export * from './user-score.repository';
 export * from './user-score-detail.repository';
 export * from './claimed-points-ndc.repository';
 export * from './referer.repository';
+export * from './offer.repository';
+export * from './order.repository';
