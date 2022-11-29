@@ -271,20 +271,10 @@ export class UserController {
     console.log(user);
     if (user){
       const role = await this.findRoleSlugOrId(user.role);
-      console.log("hola1");
-      console.log(credentials);
       const verifyUser = await this.userService.verifyCredentials(credentials);
-      console.log("hola2");
       const userProfile = this.userService.convertToUserProfile(verifyUser);
-      console.log("hola3");
       const token = await this.jwtService.generateToken(userProfile);
-      console.log("hola4");
       await this.auditAuthenticationRepository.create(registerAuditAuth(verifyUser.id, 1));
-      console.log("hola5");
-      console.log(verifyUser);
-      console.log(userProfile);
-      console.log(token);
-
       return {
         name: user.name + " " + user.lastName,
         email: user.email,
@@ -295,7 +285,7 @@ export class UserController {
         token: token
       };
     }
-    throw new HttpErrors.Unauthorized("Usuario no registrado, favor contacte al administrador");    
+    throw new HttpErrors.Unauthorized("Usuario no registrado, debe crear una cuenta para iniciar sesión"); 
   }
   @post('/users/regist', {
     responses: {
@@ -309,7 +299,7 @@ export class UserController {
     //user: User,
     @requestBody(RegisterRequestBody) credentials: RegisterCredentials,
   ): Promise<any> {
-    try {
+    //try {
       const users = await this.userRepository.find( { where : { email : credentials.email }});
       if (users.length == 0) {
         const previousCredentials = await this.userCredentialsRepository.find({where: {userId: credentials.email}});
@@ -352,12 +342,11 @@ export class UserController {
         await this.auditActionsRepository.create(registerAuditAction(newUser.id, "Creacion de Usuario y credenciales"));
         return true;
       } else {
-        throw new HttpErrors.Conflict('errors.unathorized');
+        throw new HttpErrors.Conflict('El email ya se encuentra registrado en el sistema, intente con otro email');
       }
-    } catch (ex) {
-      console.log(ex);
-      throw new HttpErrors.Conflict('sign-in.dntexist');
-    }
+    //} catch (ex) {
+    throw new HttpErrors.Conflict('sign-in.dntexist');
+    //}
     
   }
 
