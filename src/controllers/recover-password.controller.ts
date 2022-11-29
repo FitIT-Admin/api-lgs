@@ -68,15 +68,16 @@ export class RecoverPasswordController {
 
     const userExists = await this.userRepository.find({where: {email: recoverPassword.user}});
     if (userExists.length == 0) {
-      throw new HttpErrors.Conflict('sign-in.dntexist');
+      throw new HttpErrors.Conflict('El email ingresado no esta registrado dentro del sistema');
     }
-
+    if (userExists[0].status == 2) {
+      throw new HttpErrors.Unauthorized("Su cuenta acutalmente se encuentra bloqueada, comuniquese con un administrador");
+    }
     if (userExists[0].status == 3) {
-      throw new HttpErrors.Unauthorized("sign-in.desactivated");
-
+      throw new HttpErrors.Unauthorized("Su cuenta acutalmente se encuentra deshabilitada");
     }
     if (userExists[0].email == null || userExists[0].email == '') {
-      throw new HttpErrors.Unauthorized("sign-in.not_email");
+      throw new HttpErrors.Unauthorized("El usuario no posee un email");
     } else {
       const recoverExists = await this.recoverPasswordRepository.find({where: {user: userExists[0].email, active: true}});
       if (recoverExists.length > 0) {
