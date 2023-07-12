@@ -25,7 +25,7 @@ jobs:
         uses: shimataro/ssh-key-action@v2.5.1
         with:
           key: ${{ secrets.SUBDEV_SSH_PRIVATE_KEY }}
-          #known_hosts: ${{ secrets.SUBDEV_KNOWN_HOSTS }}
+          known_hosts: ${{ secrets.SUBDEV_KNOWN_HOSTS }}
 
       - name: Deploy to server
         run: rsync -avz ./ ${{ secrets.SUBDEV_SSH_USER }}@${{ secrets.SUBDEV_SSH_HOST }}:/home/developer/api
