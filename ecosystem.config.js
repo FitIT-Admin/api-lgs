@@ -1,7 +1,7 @@
 module.exports = { 
   apps: [ 
     { 
-      name: 'FitBackAPI', 
+      name: 'SubastasAPI', 
       script: 'dist/index.js', 
       instances: 1, 
       autorestart: true, 

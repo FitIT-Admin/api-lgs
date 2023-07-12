@@ -115,6 +115,22 @@ import { ObjectId } from 'mongodb';
         await this.orderRepository.replaceById(order[0].id, order[0]);
         return true;
     }
+    @get('/order')
+    @response(200, {
+        description: 'Order model instance',
+        content: {
+        'application/json': {
+            schema: getModelSchemaRef(Order, {includeRelations: true}),
+            },
+        },
+    })
+    @authenticate('jwt')
+    async findAPending(): Promise<any> {
+        const orders = await this.orderRepository.find({where: {status: {$ne: -1}}});
+        //console.log(orders);
+        return orders;
+    
+    }
   }
   
   
