@@ -1,3 +1,4 @@
+
 name: LoopBack 4 deployment.
 
 on:
@@ -10,21 +11,24 @@ jobs:
     if: github.ref == 'refs/heads/dev'
     steps:
       - uses: actions/checkout@v3
-      - env:
-          MY_CLIENT_SECRET: ${{ secrets.SUBDEV_SSH_PRIVATE_KEY }}
-          MY_OPENSSL_PASSWORD: ${{ secrets.SUBDEV_SSH_PRIVATE_KEY }}
-          MY_OPENSSL_ITER: ${{ secrets.SUBDEV_SSH_PRIVATE_KEY }}
-        run: |
-          echo "MY_CLIENT_SECRET (***)     = ${MY_CLIENT_SECRET}"
-          echo "MY_CLIENT_SECRET (openssl) = $(echo "${MY_CLIENT_SECRET}" | echo  ${MY_OPENSSL_ITER} "${MY_OPENSSL_PASSWORD}")"
-          echo "Copy the above value, and then execute locally:"
+
+      - name: Use Node.js 14.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 14.x
+          cache: "npm"
+
+      - name: Install dependencies and build
+        run: npm ci && npm run build
+
+      - name: Install SSH Key and known_hosts
+        uses: shimataro/ssh-key-action@v2.5.1
+        with:
+          key: ${{ secrets.SUBDEV_SSH_PRIVATE_KEY }}
+          known_hosts: ${{ secrets.SUBDEV_KNOWN_HOSTS }}
 
       - name: Deploy to server
-        env:
-            SUBDEV_SSH_PRIVATE_KEY: ${{ secrets.SUBDEV_SSH_PRIVATE_KEY }}
-            SUBDEV_KNOWN_HOSTS: ${{ secrets.SUBDEV_KNOWN_HOSTS }}
-
-        run:  echo "SUBDEV_SSH_PRIVATE_KEY (***)     = ${SUBDEV_SSH_PRIVATE_KEY}" | rsync -avz ./ ${{ secrets.SUBDEV_SSH_USER }}@${{ secrets.SUBDEV_SSH_HOST }}:/home/developer/api
+        run: rsync -avz ./ ${{ secrets.SUBDEV_SSH_USER }}@${{ secrets.SUBDEV_SSH_HOST }}:/home/developer/api
 
       - name: Restart the app
         run: ssh ${{ secrets.SUBDEV_SSH_USER }}@${{ secrets.SUBDEV_SSH_HOST }} 'cd /home/developer/api/ && pm2 restart ecosystem.config.js'
