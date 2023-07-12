@@ -116,7 +116,12 @@ export class RoleController {
     @param.path.string('slug') slug: string): Promise<Role> {
     var role = await this.findSlugOrId(slug);
     const user = await this.userRepository.find({ where : { email : role.createdBy}});
-    role.createdBy = user[0].name + " " + user[0].lastName  + " " + user[0].secondLastName
+    if (user && user.length > 0) {
+      role.createdBy = user[0].name + " " + user[0].lastName  + " " + user[0].secondLastName
+    } else {
+      role.createdBy = "Usuario no encontrado";
+    }
+    
     return role;
   }
 
