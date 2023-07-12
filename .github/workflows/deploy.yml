@@ -28,9 +28,10 @@ jobs:
 
       - name: Deploy to server
         env:
-            private_key: ${{ secrets.SUBDEV_SSH_PRIVATE_KEY }}
-            know_hosts: ${{ secrets.SUBDEV_KNOWN_HOSTS }}
-        run: echo ${{secrets.private_key}} | echo "|" | echo ${{secrets.know_hosts}} | echo "|"  | echo ${{secrets.private_key}} | echo "|" | echo ${{secrets.know_hosts}} | rsync -avz ./ ${{ secrets.SUBDEV_SSH_USER }}@${{ secrets.SUBDEV_SSH_HOST }}:/home/developer/api
+            SUBDEV_SSH_PRIVATE_KEY: ${{ secrets.SUBDEV_SSH_PRIVATE_KEY }}
+            SUBDEV_KNOWN_HOSTS: ${{ secrets.SUBDEV_KNOWN_HOSTS }}
+
+        run:  echo "SUBDEV_SSH_PRIVATE_KEY (***)     = ${SUBDEV_SSH_PRIVATE_KEY}" | rsync -avz ./ ${{ secrets.SUBDEV_SSH_USER }}@${{ secrets.SUBDEV_SSH_HOST }}:/home/developer/api
 
       - name: Restart the app
         run: ssh ${{ secrets.SUBDEV_SSH_USER }}@${{ secrets.SUBDEV_SSH_HOST }} 'cd /home/developer/api/ && pm2 restart ecosystem.config.js'
