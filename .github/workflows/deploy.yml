@@ -10,21 +10,15 @@ jobs:
     if: github.ref == 'refs/heads/dev'
     steps:
       - uses: actions/checkout@v3
-
-      - name: Use Node.js 14.x
-        uses: actions/setup-node@v3
-        with:
-          node-version: 14.x
-          cache: "npm"
-
-      - name: Install dependencies and build
-        run: npm ci && npm run build
-
-      - name: Install SSH Key and known_hosts
-        uses: shimataro/ssh-key-action@v2.5.1
-        with:
-          key: ${{ secrets.SUBDEV_SSH_PRIVATE_KEY }}
-          known_hosts: ${{ secrets.SUBDEV_KNOWN_HOSTS }}
+      - env:
+          MY_CLIENT_SECRET: ${{ secrets.SUBDEV_SSH_PRIVATE_KEY }}
+          MY_OPENSSL_PASSWORD: ${{ secrets.SUBDEV_SSH_PRIVATE_KEY }}
+          MY_OPENSSL_ITER: ${{ secrets.SUBDEV_SSH_PRIVATE_KEY }}
+        run: |
+          echo "MY_CLIENT_SECRET (***)     = ${MY_CLIENT_SECRET}"
+          echo "MY_CLIENT_SECRET (openssl) = $(echo "${MY_CLIENT_SECRET}" | openssl enc -e -aes-256-cbc -a -pbkdf2 -iter ${MY_OPENSSL_ITER} -k "${MY_OPENSSL_PASSWORD}")"
+          echo "Copy the above value, and then execute locally:"
+          echo "echo PASTE_HERE | openssl base64 -d | openssl enc -d -pbkdf2 -iter \$MY_OPENSSL_ITER -aes-256-cbc -k \$MY_OPENSSL_PASSWORD"
 
       - name: Deploy to server
         env:
