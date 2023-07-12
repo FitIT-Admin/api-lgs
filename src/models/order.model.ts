@@ -3,6 +3,7 @@ import {UserCredentials} from '../models';
 import {TimestampEntity} from '../lib/timestamp-entity';
 import { SlugEntityTitle } from '../lib/slug-entity-title';
 import { SpareParts } from './spareParts.model';
+import {Offer} from './offer.model';
 
 @model()
 export class Order extends TimestampEntity {
@@ -60,8 +61,8 @@ export class Order extends TimestampEntity {
   })
   status: number;
 
-  @property.array(String)
-  offers: string[];
+  @property.array(Object)
+  offers: Offer[];
 
   @property({
     type: 'number',

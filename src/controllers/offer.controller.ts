@@ -24,7 +24,7 @@ import {
 import { OfferRepository, OrderRepository, UserRepository } from '../repositories';
 import { Company } from '../models/company.model';
 import { Offer, Order, User } from '../models';
-  export class OrderController {
+  export class OfferController {
     
     constructor(
         @repository(ServiceRepository) public serviceRepository : ServiceRepository,
@@ -33,7 +33,7 @@ import { Offer, Order, User } from '../models';
         @repository(OfferRepository) public offerRepository: OfferRepository,
     ) {}
       
-    @post('/offer')
+    @post('/offer/{id}')
     @response(200, {
         description: 'Offer model instance'
     })
@@ -49,10 +49,11 @@ import { Offer, Order, User } from '../models';
             },
         },
     })
-    offer: Omit<Offer, 'id'>,
-    ): Promise<Offer> {
-        console.log(offer);
-        return await this.offerRepository.create(offer);
+    offer: Offer, @param.path.string('id') id: string
+    ): Promise<void> {
+        const orderTemp = await this.orderRepository.findById(id);
+        orderTemp.offers.push(offer);
+        return await this.orderRepository.updateById(orderTemp.id, orderTemp);
     }
     
     @put('/offer/{id}')

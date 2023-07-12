@@ -138,7 +138,7 @@ export class UserController {
     return this.userRepository.find(filter);
   }
 
-  @get('/users/{rut}', {
+  @get('/users/{email}', {
     responses: {
       '200': {
         description: 'User model instance',
@@ -152,12 +152,12 @@ export class UserController {
   })
   @authenticate('jwt')
   async findById(
-    @param.path.string('rut') rut: string) : Promise<User> {
-    const users = await this.userRepository.find({ where : { rut : rut}});
-    return users[0];
+    @param.path.string('email') email: string) : Promise<User | null> {
+    const users = await this.userRepository.find({ where : { email : email}});
+    return (users && users.length > 0) ? users[0] : null;
   }
 
-  @put('/users/{rut}', {
+  @put('/users/{email}', {
     responses: {
       '204': {
         description: 'User PUT success',
@@ -166,29 +166,31 @@ export class UserController {
   })
   @authenticate('jwt')
   async replaceById(
-    @param.path.string('rut') rut: string,
+    @param.path.string('email') email: string,
     @requestBody() user: User,
   ): Promise<void> {
-    const users = await this.userRepository.find({ where : { rut : rut}});
-    users[0].name = user.name;
-    users[0].lastName = user.lastName;
-    users[0].secondLastName = user.secondLastName;
-    users[0].email = user.email;
-    users[0].phone = user.phone;
-    users[0].nationality = user.nationality;
-    users[0].role = user.role;
-    users[0].status = user.status;
-    users[0].charge = user.charge;
-    users[0].department = user.department;
-    users[0].group = user.group;
-    users[0].rutJefe = user.rutJefe;
-    users[0].cod_andes = user.cod_andes;
-    users[0].cod_tango = user.cod_tango;
-    users[0].rut = user.rut;
-    await this.userRepository.updateById(users[0].id, users[0]);
+    const users = await this.userRepository.find({ where : { email : email}});
+    if (users && users.length > 0) {
+      users[0].name = user.name;
+      users[0].lastName = user.lastName;
+      users[0].secondLastName = user.secondLastName;
+      users[0].email = user.email;
+      //users[0].phone = user.phone;
+      //users[0].nationality = user.nationality;
+      users[0].role = user.role;
+      users[0].status = user.status;
+      //users[0].charge = user.charge;
+      //users[0].department = user.department;
+      //users[0].group = user.group;
+      //users[0].rutJefe = user.rutJefe;
+      //users[0].cod_andes = user.cod_andes;
+      //users[0].cod_tango = user.cod_tango;
+      //users[0].rut = user.rut;
+      await this.userRepository.updateById(users[0].id, users[0]);
+    }
   }
 
-  @put('/users/status/{rut}/{status}', {
+  @put('/users/status/{email}/{status}', {
     responses: {
       '204': {
         description: 'User PUT success',
@@ -197,12 +199,14 @@ export class UserController {
   })
   @authenticate('jwt')
   async changeStatus(
-    @param.path.string('rut') rut: string,
+    @param.path.string('email') email: string,
     @param.path.number('status') status: number,
   ): Promise<void> {
-    const users = await this.userRepository.find({ where : { rut : rut}});
-    users[0].status = status;
-    await this.userRepository.replaceById(users[0].id, users[0]);
+    const users = await this.userRepository.find({ where : { email : email}});
+    if (users && users.length > 0) {
+      users[0].status = status;
+      await this.userRepository.replaceById(users[0].id, users[0]);
+    }
   }
 
   @get('/users/current', {
@@ -282,6 +286,7 @@ export class UserController {
           slug: role.slug,
           name: role.title
         },
+        privilege: role.privilege,
         token: token
       };
     }
@@ -370,8 +375,8 @@ export class UserController {
   ): Promise<Boolean> {
 
     try {
-      const rut = currentUserProfile[securityId];
-      var user = await this.userRepository.findOne({where: {rut: rut}});
+      const email = currentUserProfile[securityId];
+      var user = await this.userRepository.findOne({where: {email: email}});
       if (user) {
         return true;
       } 
@@ -399,7 +404,7 @@ export class UserController {
     return users.length;
   }
 
-  @del('/users/{rut}', {
+  @del('/users/{email}', {
     responses: {
       '204': {
         description: 'User DELETE success',
@@ -407,9 +412,11 @@ export class UserController {
     },
   })
   @authenticate('jwt')
-  async deleteById(@param.path.string('rut') rut: string): Promise<void> {
-    const users = await this.userRepository.find({ where : { rut : rut}});
-    await this.userRepository.deleteById(users[0].id);
+  async deleteById(@param.path.string('email') email: string): Promise<void> {
+    const users = await this.userRepository.find({ where : { email : email}});
+    if (users && users.length > 0) {
+      await this.userRepository.deleteById(users[0].id);
+    }
   }
 
   private async findRoleSlugOrId(id: string): Promise<Role> {
