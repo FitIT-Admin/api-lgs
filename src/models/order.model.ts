@@ -61,9 +61,6 @@ export class Order extends TimestampEntity {
   })
   status: number;
 
-  @property.array(Object)
-  offers: Offer[];
-
   @property({
     type: 'number',
     required: true,
@@ -86,6 +83,10 @@ export class Order extends TimestampEntity {
     type: 'Date',
   })
   closingDate?: Date;
+
+  @property.array(Object)
+  offers: Offer[];
+
 
   // Define well-known properties here
 
