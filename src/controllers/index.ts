@@ -18,4 +18,6 @@ export * from './file-download.controller';
 export * from './file-upload.controller';
 export * from './coordinator.controller';
 export * from './userscore.controller';
-export * from './claimed-points-ndc.controller';export * from './referer.controller';
+export * from './claimed-points-ndc.controller';
+export * from './referer.controller';
+export * from './product.controller';
