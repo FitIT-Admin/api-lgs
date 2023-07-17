@@ -24,7 +24,7 @@ import {
 import { OfferRepository, OrderRepository, UserRepository } from '../repositories';
 import { Company } from '../models/company.model';
 import { Offer, Order, User } from '../models';
-  export class OrderController {
+  export class OfferController {
     
     constructor(
         @repository(ServiceRepository) public serviceRepository : ServiceRepository,
@@ -33,7 +33,7 @@ import { Offer, Order, User } from '../models';
         @repository(OfferRepository) public offerRepository: OfferRepository,
     ) {}
       
-    @post('/offer')
+    @post('/offer/{id}')
     @response(200, {
         description: 'Offer model instance'
     })
@@ -49,10 +49,11 @@ import { Offer, Order, User } from '../models';
             },
         },
     })
-    offer: Omit<Offer, 'id'>,
-    ): Promise<Offer> {
-        console.log(offer);
-        return await this.offerRepository.create(offer);
+    offer: Offer, @param.path.string('id') id: string
+    ): Promise<void> {
+        const orderTemp = await this.orderRepository.findById(id);
+        orderTemp.offers.push(offer);
+        return await this.orderRepository.updateById(orderTemp.id, orderTemp);
     }
     
     @put('/offer/{id}')
@@ -103,17 +104,27 @@ import { Offer, Order, User } from '../models';
         return offers;
     
     }
-    @put('/offer/delete/{id}')
+    @put('/offer/delete/{idOffer}/{idOrder}')
     @response(204, {
       description: 'Offer DELETE success',
     })
     @authenticate('jwt')
     async deleteById(
-        @param.path.string('id') id: string
+        @param.path.string('idOffer') idOffer: string,
+        @param.path.string('idOrder') idOrder: string
     ): Promise<any> {
-        const offer = await this.offerRepository.find({ where : { id : id}});
-        offer[0].status = -1;
-        await this.offerRepository.replaceById(offer[0].id, offer);
+        let orders = await this.orderRepository.find({where: {idOrder: idOrder}});
+        if(orders[0].offers.length > 0){
+            let arr = orders[0].offers;
+            let idxObj = await arr.findIndex(object => {
+              return object.idOffer === idOffer;
+            });
+            arr.splice(idxObj,1);
+            const orderTemp = await this.orderRepository.findById(orders[0].id);
+            orderTemp.offers = arr;
+            await this.orderRepository.updateById(orderTemp.id, orderTemp);
+        }
+        return true;
     }
   }
   

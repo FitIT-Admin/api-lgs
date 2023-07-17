@@ -157,6 +157,22 @@ import { OrderCompany } from '../interface/order-company.interface';
         }
         return true;
     }
+    
+    @get('/order/byidorder/{idOrder}')
+    @response(200, {
+        description: 'Order model instance',
+        content: {
+        'application/json': {
+            schema: getModelSchemaRef(Order, {includeRelations: true}),
+            },
+        },
+    })
+    @authenticate('jwt')
+    async findAByOrderId(@param.path.string('idOrder') idOrder: string,): Promise<any> {
+        let orders = await this.orderRepository.find({where: {idOrder: idOrder}});
+        return orders[0];
+    
+    }
   }
   
   

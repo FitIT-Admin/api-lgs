@@ -1,7 +1,7 @@
 {
-  "name": "api-nielsen",
+  "name": "api-subastas",
   "version": "0.0.1",
-  "description": "API Nielsen",
+  "description": "API Subastas",
   "keywords": [
     "loopback-application",
     "loopback"
@@ -41,7 +41,7 @@
     "type": "git",
     "url": ""
   },
-  "author": "Carlos Castañeda <carlos.castaneda@axity.com>",
+  "author": "FitIT <dev@fitit.cl>",
   "license": "",
   "files": [
     "README.md",

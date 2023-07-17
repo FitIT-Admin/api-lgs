@@ -21,3 +21,4 @@ export * from './userscore.controller';
 export * from './claimed-points-ndc.controller';
 export * from './referer.controller';
 export * from './product.controller';
+export * from './offer.controller';

@@ -2,6 +2,7 @@ import {hasOne, model, property} from '@loopback/repository';
 import {UserCredentials} from '../models';
 import {TimestampEntity} from '../lib/timestamp-entity';
 import { SlugEntityTitle } from '../lib/slug-entity-title';
+import {Offer} from './offer.model';
 
 @model()
 export class Order extends TimestampEntity {
