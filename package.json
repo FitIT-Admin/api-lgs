@@ -1,7 +1,7 @@
 {
-  "name": "api-nielsen",
+  "name": "api-subastas",
   "version": "0.0.1",
-  "description": "API Nielsen",
+  "description": "API Subastas",
   "keywords": [
     "loopback-application",
     "loopback"

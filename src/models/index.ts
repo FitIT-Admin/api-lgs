@@ -25,4 +25,3 @@ export * from './claimed-points-ndc.model';
 export * from './referer.model';
 export * from './order.model';
 export * from './offer.model';
-export * from './spareParts.model';
