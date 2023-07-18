@@ -116,7 +116,7 @@ import { Offer, Order, User } from '../models';
         let orders = await this.orderRepository.find({where: {idOrder: idOrder}});
         if(orders[0].offers.length > 0){
             let arr = orders[0].offers;
-            let idxObj = await arr.findIndex(object => {
+            let idxObj = await arr.findIndex((object: any) => {
               return object.idOffer === idOffer;
             });
             arr.splice(idxObj,1);
