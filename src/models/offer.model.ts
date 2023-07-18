@@ -77,44 +77,6 @@ export class Offer extends TimestampEntity {
     required: true,
   })
   cantidad: number;
-
-  @property({
-    type: 'string',
-    required: false,
-  })
-  comentario: string;
-  
-  @property({
-    type: 'string',
-    required: true,
-  })
-  despacho: string;
-
-  @property({
-    type: 'string',
-    required: true,
-  })
-  company: string;
-  
-  @property({
-    type: 'string',
-    required: true,
-  })
-  origen: string;
-  
-  @property({
-    type: 'string',
-    required: true,
-  })
-  estado: string;
-  
-  
-  @property({
-    type: 'number',
-    required: true,
-  })
-  cantidad: number;
-
   // Define well-known properties here
 
   // Indexer property to allow additional data
