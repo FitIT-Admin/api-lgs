@@ -25,3 +25,4 @@ export * from './claimed-points-ndc.repository';
 export * from './referer.repository';
 export * from './offer.repository';
 export * from './order.repository';
+export * from './product.repository';
