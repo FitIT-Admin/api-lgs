@@ -21,15 +21,16 @@ import {
   import {authenticate} from '@loopback/authentication';
   import { ServiceRepository } from '../repositories/service.repository';
   import { Service } from '../models/service.model';
-import { OfferRepository, OrderRepository, UserRepository } from '../repositories';
+import { OfferRepository, OrderRepository, UserRepository , ProductRepository} from '../repositories';
 import { Company } from '../models/company.model';
-import { Offer, Order, User } from '../models';
+import { Offer, Order, User, Product } from '../models';
   export class OfferController {
     
     constructor(
         @repository(ServiceRepository) public serviceRepository : ServiceRepository,
         @repository(UserRepository) public userRepository: UserRepository,
         @repository(OrderRepository) public orderRepository: OrderRepository,
+        @repository(ProductRepository) public productRepository: ProductRepository,
         @repository(OfferRepository) public offerRepository: OfferRepository,
     ) {}
       
@@ -51,9 +52,9 @@ import { Offer, Order, User } from '../models';
     })
     offer: Offer, @param.path.string('id') id: string
     ): Promise<void> {
-        const orderTemp = await this.orderRepository.findById(id);
-        orderTemp.offers.push(offer);
-        return await this.orderRepository.updateById(orderTemp.id, orderTemp);
+        const orderTemp = await this.productRepository.findById(id);
+        orderTemp.offer.push(offer);
+        return await this.productRepository.updateById(orderTemp.id, orderTemp);
     }
     
     @put('/offer/{id}')
@@ -81,9 +82,9 @@ import { Offer, Order, User } from '../models';
         @param.path.string('email') email: string,
         @param.path.string('rut') rut: string,
     ): Promise<any> {
-        const offers = await this.orderRepository.find({where: {createBy: email, company: rut}});
-        console.log(offers);
-        return offers;
+        const offer = await this.orderRepository.find({where: {createBy: email, company: rut}});
+        console.log(offer);
+        return offer;
     
     }
     @get('/offer/{email}')
@@ -99,9 +100,9 @@ import { Offer, Order, User } from '../models';
     async find(
         @param.path.string('email') email: string
     ): Promise<any> {
-        const offers = await this.orderRepository.find({where: {createBy: email}});
-        console.log(offers);
-        return offers;
+        const offer = await this.orderRepository.find({where: {createBy: email}});
+        console.log(offer);
+        return offer;
     
     }
     @put('/offer/delete/{idOffer}/{idOrder}')
@@ -113,16 +114,16 @@ import { Offer, Order, User } from '../models';
         @param.path.string('idOffer') idOffer: string,
         @param.path.string('idOrder') idOrder: string
     ): Promise<any> {
-        let orders = await this.orderRepository.find({where: {idOrder: idOrder}});
-        if(orders[0].offers.length > 0){
-            let arr = orders[0].offers;
+        let orders = await this.productRepository.find({where: {idOrder: idOrder}});
+        if(orders[0].offer.length > 0){
+            let arr = orders[0].offer;
             let idxObj = await arr.findIndex((object: any) => {
               return object.idOffer === idOffer;
             });
             arr.splice(idxObj,1);
-            const orderTemp = await this.orderRepository.findById(orders[0].id);
-            orderTemp.offers = arr;
-            await this.orderRepository.updateById(orderTemp.id, orderTemp);
+            const orderTemp = await this.productRepository.findById(orders[0].id);
+            orderTemp.offer = arr;
+            await this.productRepository.updateById(orderTemp.id, orderTemp);
         }
         return true;
     }
