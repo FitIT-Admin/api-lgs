@@ -2,7 +2,6 @@ import {hasOne, model, property} from '@loopback/repository';
 import {UserCredentials} from '../models';
 import {TimestampEntity} from '../lib/timestamp-entity';
 import { SlugEntityTitle } from '../lib/slug-entity-title';
-import { SpareParts } from './spareParts.model';
 import {Offer} from './offer.model';
 
 @model()
@@ -32,61 +31,15 @@ export class Order extends TimestampEntity {
   company: string;
 
   @property({
-    type: 'object',
-    required: true,
-  })
-  sparePart: {brand: string, model: string, year: string, engine: string};
-
-  @property({
-    type: 'string',
-    required: true,
-  })
-  productName: string;
-
-  @property({
-    type: 'string',
-    required: true,
-  })
-  productBrand: string;
-
-  @property({
-    type: 'string',
-    required: true,
-  })
-  productDetails: string;
-
-  @property({
     type: 'number',
     required: true,
   })
   status: number;
 
   @property({
-    type: 'number',
-    required: true,
-  })
-  limitPrice: number;
-
-  @property({
-    type: 'number',
-    required: true,
-  })
-  qty: number;
-
-  @property({
-    type: 'string',
-    required: true,
-  })
-  photo: string;
-
-  @property({
     type: 'Date',
   })
   closingDate?: Date;
-
-  @property.array(Object)
-  offers: Offer[];
-
 
   // Define well-known properties here
 
