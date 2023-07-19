@@ -1,4 +1,4 @@
-name: LoopBack 4 deployment.
+name: LoopBack 4 deployment
 
 on:
   push:
