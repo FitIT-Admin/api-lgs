@@ -29,12 +29,12 @@ export class Product extends TimestampEntity {
   model: string;
 
   @property({
-    type: 'string',
+    type: 'null',
   })
   year: string | null;
 
   @property({
-    type: 'string',
+    type: 'null',
   })
   engine: string | null;
 
@@ -63,6 +63,18 @@ export class Product extends TimestampEntity {
     required: true,
   })
   status: number;
+
+  @property({
+    type: 'string',
+    required: true,
+  })
+  createBy: string;
+
+  @property({
+    type: 'string',
+    required: true,
+  })
+  company: string;
   // Define well-known properties here
 
   // Indexer property to allow additional data
