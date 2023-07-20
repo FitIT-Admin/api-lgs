@@ -24,6 +24,7 @@ import {
 import { OfferRepository, OrderRepository, UserRepository , ProductRepository} from '../repositories';
 import { Company } from '../models/company.model';
 import { Offer, Order, User, Product } from '../models';
+import { ObjectId } from 'mongodb';
   export class OfferController {
     
     constructor(
@@ -105,23 +106,23 @@ import { Offer, Order, User, Product } from '../models';
         return offer;
     
     }
-    @put('/offer/delete/{idOffer}/{idOrder}')
+    @put('/offer/delete/{idOffer}/{idProduct}')
     @response(204, {
       description: 'Offer DELETE success',
     })
     @authenticate('jwt')
     async deleteById(
         @param.path.string('idOffer') idOffer: string,
-        @param.path.string('idOrder') idOrder: string
+        @param.path.string('idProduct') idProduct: string
     ): Promise<any> {
-        let orders = await this.productRepository.find({where: {idOrder: idOrder}});
-        if(orders[0].offer.length > 0){
-            let arr = orders[0].offer;
+        let orders = await this.productRepository.findById(idProduct);
+        if(orders.offer.length > 0){
+            let arr = orders.offer;
             let idxObj = await arr.findIndex((object: any) => {
               return object.idOffer === idOffer;
             });
             arr.splice(idxObj,1);
-            const orderTemp = await this.productRepository.findById(orders[0].id);
+            const orderTemp = await this.productRepository.findById(orders.id);
             orderTemp.offer = arr;
             await this.productRepository.updateById(orderTemp.id, orderTemp);
         }
