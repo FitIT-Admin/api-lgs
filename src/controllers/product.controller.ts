@@ -40,7 +40,7 @@ export class ProductController {
     description: 'Product model instance',
     content: {'application/json': {schema: getModelSchemaRef(Product)}},
   })
-  //@authenticate('jwt')
+  @authenticate('jwt')
   async create(
     @requestBody({
       content: {
@@ -72,7 +72,7 @@ export class ProductController {
       },
     },
   })
-  //@authenticate('jwt')
+  @authenticate('jwt')
   async count(
     @param.where(Product) where?: Where<Product>,
   ): Promise<Count> {
@@ -98,7 +98,7 @@ export class ProductController {
       },
     },
   })
-  //@authenticate('jwt')
+  @authenticate('jwt')
   async find(
     @param.filter(Product) filter?: Filter<Product>,
   ): Promise<Product[]> {
@@ -121,7 +121,7 @@ export class ProductController {
       },
     },
   })
-  //@authenticate('jwt')
+  @authenticate('jwt')
   async findById(
     @param.path.string('id') id: string): Promise<Product> {
         try {
@@ -145,7 +145,7 @@ export class ProductController {
         },
       },
     })
-    //@authenticate('jwt')
+    @authenticate('jwt')
     async findByOrder(
       @param.path.string('id') id: string): Promise<Product[]> {
           try {
@@ -164,7 +164,7 @@ export class ProductController {
       },
     },
   })
-  //@authenticate('jwt')
+  @authenticate('jwt')
   async replaceById(
     @param.path.string('id') id: string,
     @requestBody() product: Product,): Promise<void> {
@@ -183,7 +183,7 @@ export class ProductController {
       },
     },
   })
-  //@authenticate('jwt')
+  @authenticate('jwt')
   async deleteById(
     @param.path.string('id') id: string): Promise<void> {
         try {
