@@ -19,35 +19,8 @@ export class Product extends TimestampEntity {
 
   @property({
     type: 'string',
-    required: true,
   })
-  brand: string;
-
-  @property({
-    type: 'string',
-  })
-  model: string;
-
-  @property({
-    type: 'null',
-  })
-  year: string | null;
-
-  @property({
-    type: 'null',
-  })
-  engine: string | null;
-
-  @property({
-    type: 'string',
-    required: true,
-  })
-  chassis: string;
-
-  @property({
-    type: 'string',
-  })
-  description: string;
+  title: string;
 
   @property.array(Object)
   offer: Offer[];
