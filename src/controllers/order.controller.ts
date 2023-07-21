@@ -100,25 +100,10 @@ import { OrderCompany } from '../interface/order-company.interface';
     @authenticate('jwt')
     async find(
         @param.path.string('email') email: string
-    ): Promise<any> {
+    ): Promise<Order[]> {
         const orders = await this.orderRepository.find({where: {createBy: email, status: {$ne: -1}}});
-        let ordersWithProductsAndCompany: OrderCompany[] = [];
-        for (let order of orders) {
-            const users = await this.userRepository.find({ where : { email : email}});
-            if (users && users.length > 0) {
-                let companyOrder = users[0].companies.filter(company => company.rut === order.company);
-                ordersWithProductsAndCompany.push({
-                    id: order.id,
-                    idOrder: order.idOrder,
-                    createBy: order.createBy,
-                    company: companyOrder[0],
-                    status: order.status,
-                    closingDate: order.closingDate,
-                });
-            }
-        }
         //console.log(orders);
-        return (ordersWithProductsAndCompany) ? ordersWithProductsAndCompany : [];
+        return (orders && orders.length > 0) ? orders : [];
     
     }
     @get('/order/{id}')
