@@ -77,6 +77,19 @@ export class Offer extends TimestampEntity {
     required: true,
   })
   cantidad: number;
+  
+  @property({
+    type: 'string',
+    required: true,
+  })
+  idOrder: string;
+  
+  @property({
+    type: 'string',
+    required: true,
+  })
+  idProduct: string;  
+  
   // Define well-known properties here
 
   // Indexer property to allow additional data

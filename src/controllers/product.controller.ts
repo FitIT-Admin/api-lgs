@@ -22,6 +22,7 @@ import {authenticate} from '@loopback/authentication';
 //import {ProductRepository, UserRepository} from '../repositories';
 //import {Product} from '../models';
 import { ProductRepository } from '../repositories/product.repository';
+import { OfferRepository } from '../repositories/offer.repository';
 import { Product } from '../models/product.model';
 import { ObjectId } from 'mongodb';
 //import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
@@ -30,9 +31,8 @@ import { ObjectId } from 'mongodb';
 
 export class ProductController {
   constructor(
-    //@repository(UserRepository) public userRepository: UserRepository,
     @repository(ProductRepository) public productRepository: ProductRepository,
-    //@repository(ProductRepository) public sparePartRepository: ProductRepository,
+    @repository(OfferRepository) public offerRepository: OfferRepository,
   ) {}
 
   @post('/product')
@@ -103,7 +103,14 @@ export class ProductController {
     @param.filter(Product) filter?: Filter<Product>,
   ): Promise<Product[]> {
         try {
-            return this.productRepository.find(filter);
+            let products = await this.productRepository.find(filter);
+            
+            for(let i=0;i<products.length;i++){
+                let offers = await this.offerRepository.find({ where: {idProduct :products[i].id, status: {$ne: -1}}});
+                products[i].offer = offers;
+            }
+            
+            return products;
         } catch(error) {
             throw new HttpErrors.ExpectationFailed('Error al buscar');
         }
@@ -125,8 +132,12 @@ export class ProductController {
   async findById(
     @param.path.string('id') id: string): Promise<Product> {
         try {
-            var product: Product = await this.productRepository.findById(id);
-            return product;
+   
+            let products = await this.productRepository.findById(id);
+            let offers = await this.offerRepository.find({ where: {idProduct :id, status: {$ne: -1}}});
+            products.offer = offers;
+            return products;
+            
         } catch(error) {
             console.log(error);
             throw new HttpErrors.ExpectationFailed('Error al buscar por id');
@@ -192,6 +203,29 @@ export class ProductController {
                 await this.productRepository.deleteById(sparePart.id);
             } else {
                 throw new HttpErrors.ExpectationFailed('Error no se encuentra spare-part');
+            }
+        } catch (error) {
+            console.log(error);
+            throw new HttpErrors.ExpectationFailed('Error al buscar por id');
+        }
+    }
+    
+ @del('/offer/{id}', {
+    responses: {
+      '204': {
+        description: 'Offer DELETE success',
+      },
+    },
+  })
+  @authenticate('jwt')
+  async deleteByIdOffer(
+    @param.path.string('id') id: string): Promise<void> {
+        try {
+            const offer = await this.offerRepository.findById(id);
+            if (offer) {
+                await this.offerRepository.deleteById(offer.id);
+            } else {
+                throw new HttpErrors.ExpectationFailed('Error no se encuentra oferta');
             }
         } catch (error) {
             console.log(error);

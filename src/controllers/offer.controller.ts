@@ -35,7 +35,7 @@ import { ObjectId } from 'mongodb';
         @repository(OfferRepository) public offerRepository: OfferRepository,
     ) {}
       
-    @post('/offer/{id}')
+    @post('/offer')
     @response(200, {
         description: 'Offer model instance'
     })
@@ -51,11 +51,9 @@ import { ObjectId } from 'mongodb';
             },
         },
     })
-    offer: Offer, @param.path.string('id') id: string
-    ): Promise<void> {
-        const orderTemp = await this.productRepository.findById(id);
-        orderTemp.offer.push(offer);
-        return await this.productRepository.updateById(orderTemp.id, orderTemp);
+    offer: Omit<Offer, 'id'>,
+    ): Promise<Offer> {
+        return await this.offerRepository.create(offer);
     }
     
     @put('/offer/{id}')
@@ -106,26 +104,17 @@ import { ObjectId } from 'mongodb';
         return offer;
     
     }
-    @put('/offer/delete/{idOffer}/{idProduct}')
+    @del('/offer/delete/{id}')
     @response(204, {
       description: 'Offer DELETE success',
     })
     @authenticate('jwt')
     async deleteById(
-        @param.path.string('idOffer') idOffer: string,
-        @param.path.string('idProduct') idProduct: string
-    ): Promise<any> {
-        let orders = await this.productRepository.findById(idProduct);
-        if(orders.offer.length > 0){
-            let arr = orders.offer;
-            let idxObj = await arr.findIndex((object: any) => {
-              return object.idOffer === idOffer;
-            });
-            arr.splice(idxObj,1);
-            const orderTemp = await this.productRepository.findById(orders.id);
-            orderTemp.offer = arr;
-            await this.productRepository.updateById(orderTemp.id, orderTemp);
-        }
+        @param.path.string('id') id: string
+    ): Promise<boolean> {
+        const offer: Offer = await this.offerRepository.findById(id);
+        offer.status = -1;
+        await this.offerRepository.replaceById(offer.id, offer);
         return true;
     }
   }
