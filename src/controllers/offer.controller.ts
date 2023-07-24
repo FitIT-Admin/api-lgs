@@ -104,6 +104,125 @@ import { ObjectId } from 'mongodb';
         return offer;
     
     }
+    @get('/offer/order/{id}')
+    @response(200, {
+        description: 'Offer model instance',
+        content: {
+        'application/json': {
+            schema: getModelSchemaRef(Offer, {includeRelations: true}),
+            },
+        },
+    })
+    @authenticate('jwt')
+    async findByIdOrder(
+        @param.path.string('id') id: string
+    ): Promise<any> {
+        const offer = await this.offerRepository.find({where: {idOrder: new ObjectId(id), status: {$ne: -1}}});
+        console.log(offer);
+        return offer;
+    
+    }
+    @get('/offer/order/{id}/status/{status}')
+    @response(200, {
+        description: 'Offer model instance',
+        content: {
+        'application/json': {
+            schema: getModelSchemaRef(Offer, {includeRelations: true}),
+            },
+        },
+    })
+    @authenticate('jwt')
+    async findByIdOrderAndStatus(
+        @param.path.string('id') id: string,
+        @param.path.number('status') status: string
+    ): Promise<any> {
+        const offer = await this.offerRepository.find({where: {idOrder: new ObjectId(id), status: status}});
+        console.log(offer);
+        return offer;
+    
+    }
+    @get('/offer/product/{id}')
+    @response(200, {
+        description: 'Offer model instance',
+        content: {
+        'application/json': {
+            schema: getModelSchemaRef(Offer, {includeRelations: true}),
+            },
+        },
+    })
+    @authenticate('jwt')
+    async findByIdProduct(
+        @param.path.string('id') id: string
+    ): Promise<any> {
+        const offer = await this.offerRepository.find({where: {idProduct: new ObjectId(id), status: {$ne: -1}}});
+        console.log(offer);
+        return offer;
+    
+    }
+    @get('/offer/product/{id}/status/{status}')
+    @response(200, {
+        description: 'Offer model instance',
+        content: {
+        'application/json': {
+            schema: getModelSchemaRef(Offer, {includeRelations: true}),
+            },
+        },
+    })
+    @authenticate('jwt')
+    async findByIdProductAndStatus(
+        @param.path.string('id') id: string,
+        @param.path.number('status') status: string
+    ): Promise<any> {
+        const offer = await this.offerRepository.find({where: {idProduct: new ObjectId(id), status: status}});
+        console.log(offer);
+        return offer;
+    
+    }
+    @put('/offer/all/{ids}')
+    @response(204, {
+        description: 'Order PUT success',
+    })
+    @authenticate('jwt')
+    async replaceAllByIds(
+        @param.path.string('ids') ids: string,
+    ): Promise<void> {
+        try {
+            let offersId: string[] = ids.split(',');
+            // Definir la condición para seleccionar los registros a actualizar
+            const filter = {
+                idOffer: { $in: offersId },
+            };
+
+            // Definir el nuevo valor para el campo que se actualizará
+            const update: {} = { status: 2 };
+
+            console.log(await this.offerRepository.updateAll(update, filter));
+
+            const offersConfirm: Offer[] = await this.offerRepository.find({ where: { idOffer: { $in: offersId } } })
+            if (offersConfirm &&  offersConfirm.length > 0) {
+                const product: Product = await this.productRepository.findById(offersConfirm[0].idProduct);
+                if (product) {
+                    let sum: number = 0;
+                    for (let i = 0 ; i < offersConfirm.length ; i++) {
+                        sum+= offersConfirm[i].cantidad;
+                    }
+                    console.log(sum);
+                    console.log(product.qty);
+                    if (product.qty <= sum) {
+                        product.qty = 0;
+                        product.status = 3;
+                        await this.productRepository.updateById(product.id, product);
+                    } else {
+                        product.status = 2;
+                        product.qty = product.qty - sum;
+                        await this.productRepository.updateById(product.id, product);
+                    }
+                }
+            }
+        } catch (error) {
+            console.log(error);
+        }
+    }
     @del('/offer/delete/{id}')
     @response(204, {
       description: 'Offer DELETE success',

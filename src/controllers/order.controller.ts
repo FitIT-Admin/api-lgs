@@ -67,7 +67,20 @@ import { OrderCompany } from '../interface/order-company.interface';
         @param.path.string('id') id: string,
         @requestBody() order: Order,
     ): Promise<void> {
-        await this.orderRepository.replaceById(id, order);
+        try {
+            await this.orderRepository.replaceById(id, order);
+            if (order.status == 1) {
+                // Definir la condición para seleccionar los registros a actualizar
+                const filter: {} = { idOrder: new ObjectId(id), status: 0};
+
+                // Definir el nuevo valor para el campo que se actualizará
+                const update: {} = { status: 1 };
+
+                console.log(await this.productRepository.updateAll(update, filter));
+            }
+        } catch (error) {
+            console.log(error);
+        }
     }
     @get('/order/{email}/{rut}')
     @response(200, {
