@@ -30,9 +30,9 @@ export class Order extends TimestampEntity {
   model: string;
 
   @property({
-    type: 'null',
+    type: 'string',
   })
-  year: string | null;
+  year: string;
 
   @property({
     type: 'null',
