@@ -39,13 +39,13 @@ export class Offer extends TimestampEntity {
     type: 'string',
     required: true,
   })
-  photo: string;
+  photo?: string;
   
   @property({
     type: 'string',
     required: false,
   })
-  comentario: string;
+  comentario?: string;
   
   @property({
     type: 'string',
