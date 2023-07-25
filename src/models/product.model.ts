@@ -22,6 +22,9 @@ export class Product extends TimestampEntity {
   })
   title: string;
 
+  @property.array(Object)
+  offer?: Offer[];
+
   @property({
     type: 'number',
     required: true,
