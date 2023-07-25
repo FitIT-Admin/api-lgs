@@ -236,6 +236,27 @@ import { ObjectId } from 'mongodb';
         await this.offerRepository.replaceById(offer.id, offer);
         return true;
     }
+      
+    @post('/offer/active/')
+    @response(200, {
+      description: 'Offer model instance',
+      content: {'application/json': {schema: getModelSchemaRef(Product)}},
+    })
+    async getByCompanies(
+      @requestBody() companies: []
+    ): Promise<any> {
+      try {
+        let comp:any = [];
+        for(let i=0;i<companies.length;i++){
+            comp.push(companies[i]);
+        }
+        const allCompaniesOffer = await this.offerRepository.find({where: { status: {$ne: -1},company:{$in:comp}}});
+        return allCompaniesOffer;
+      } catch(error) {
+        console.log(error);
+        throw new HttpErrors.ExpectationFailed('Error al buscar contador');
+      }
+    }   
   }
   
   
