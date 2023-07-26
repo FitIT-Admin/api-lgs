@@ -172,8 +172,8 @@ import { ObjectId } from 'mongodb';
     async findByIdProductAndStatus(
         @param.path.string('id') id: string,
         @param.path.number('status') status: string
-    ): Promise<any> {
-        const offer = await this.offerRepository.find({where: {idProduct: new ObjectId(id), status: status}});
+    ): Promise<Offer[]> {
+        const offer: Offer[] = await this.offerRepository.find({where: {idProduct: new ObjectId(id), status: status}, limit: 5});
         console.log(offer);
         return offer;
     
