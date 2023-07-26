@@ -89,7 +89,7 @@ export class Offer extends TimestampEntity {
     required: true,
   })
   idProduct: string;  
-  
+    
   // Define well-known properties here
 
   // Indexer property to allow additional data

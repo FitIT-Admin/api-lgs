@@ -256,7 +256,28 @@ import { ObjectId } from 'mongodb';
         console.log(error);
         throw new HttpErrors.ExpectationFailed('Error al buscar contador');
       }
-    }   
+    }
+    @get('/offer/byid/{id}')
+    @response(200, {
+        description: 'Offer model instance',
+        content: {
+        'application/json': {
+            schema: getModelSchemaRef(Offer, {includeRelations: true}),
+            },
+        },
+    })
+    @authenticate('jwt')
+    async findByRealId(
+        @param.path.string('id') id: string
+    ): Promise<any> {
+
+        const offer = await this.offerRepository.findById(id);
+        const product = await this.productRepository.findById(offer.idProduct);
+        const order = await this.orderRepository.findById(offer.idOrder);
+
+        return {"offer":offer,"product":product,"order":order};
+    
+    }
   }
   
   
