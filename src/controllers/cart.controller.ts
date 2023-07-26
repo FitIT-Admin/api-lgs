@@ -59,7 +59,7 @@ import { Offer, Order } from '../models';
                 let orderOffers: { idOrder: string, offers: Offer[]}[] = [];
                 if (orders && orders.length > 0) {
                   for (let order of orders) {
-                    const offers: Offer[] = await this.offerRepository.find({ where: {status: 2, idOrder: new ObjectId(order.id)} });
+                    const offers: Offer[] = await this.offerRepository.find({ where: {status: 3, idOrder: new ObjectId(order.id)} });
                     orderOffers.push({
                       idOrder: order.idOrder,
                       offers: offers
@@ -92,7 +92,7 @@ import { Offer, Order } from '../models';
             try {
                 const orders: Order[] = await this.orderRepository.find({where: { idOrder: id}});
                 if (orders && orders.length > 0) {
-                  const offers: Offer[] = await this.offerRepository.find({ where: {status: 2, idOrder: new ObjectId(orders[0].id)} });
+                  const offers: Offer[] = await this.offerRepository.find({ where: {status: 3, idOrder: new ObjectId(orders[0].id)} });
                   // IDs para cambiar de estado
                   let offersId: string[] = [];
                   for (let offer of offers) {
@@ -105,7 +105,7 @@ import { Offer, Order } from '../models';
                   };
 
                   // Definir el nuevo valor para el campo que se actualizará
-                  const update: {} = { status: 3 };
+                  const update: {} = { status: 4 };
 
                   console.log(await this.offerRepository.updateAll(update, filter));
                 }

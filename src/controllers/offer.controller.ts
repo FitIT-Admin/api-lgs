@@ -194,7 +194,7 @@ import { ObjectId } from 'mongodb';
             };
 
             // Definir el nuevo valor para el campo que se actualizará
-            const update: {} = { status: 2 };
+            const update: {} = { status: 3 };
 
             console.log(await this.offerRepository.updateAll(update, filter));
 
