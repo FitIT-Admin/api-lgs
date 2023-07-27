@@ -53,18 +53,35 @@ import { Offer, Order } from '../models';
       @authenticate('jwt')
       async findOffersInCart(
         @param.path.string('email') email: string
-      ): Promise<{ idOrder: string, offers: Offer[]}[]> {
+      ): Promise<{ order: Order, productWithOffers: {product: Product, offers: Offer[]}[]}[]> {
             try {
                 const orders: Order[] = await this.orderRepository.find({where: {status: 1, createBy: email}});
-                let orderOffers: { idOrder: string, offers: Offer[]}[] = [];
+                let orderOffers: { order: Order, productWithOffers: {product: Product, offers: Offer[]}[]}[] = [];
+                let count: number = 0;
+                console.log(orders);
                 if (orders && orders.length > 0) {
                   for (let order of orders) {
-                    const offers: Offer[] = await this.offerRepository.find({ where: {status: 3, idOrder: new ObjectId(order.id)} });
-                    orderOffers.push({
-                      idOrder: order.idOrder,
-                      offers: offers
-                    });
+                    const products: Product[] = await this.productRepository.find({ where: { status: { inq: [2, 3] }, idOrder: new ObjectId(order.id) } });
+                    console.log(products);
+                    if (products && products.length > 0) {
+                      orderOffers.push({
+                        order: order,
+                        productWithOffers: []
+                      });
+                      for (let product of products) {
+                        const offers: Offer[] = await this.offerRepository.find({ where: {status: 3, idProduct: new ObjectId(product.id)} });
+                        if (offers && offers.length > 0) {
+                          orderOffers[count].productWithOffers.push({
+                            product: product,
+                            offers: offers
+                          });
+                        }
+                      }
+                      count++;
+                    }
+                    
                   }
+                  console.log(orderOffers);
                   return (orderOffers && orderOffers.length > 0) ? orderOffers : []
                 }
                 return (orderOffers && orderOffers.length > 0) ? orderOffers : [];
