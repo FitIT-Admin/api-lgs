@@ -315,7 +315,7 @@ import { ObjectId } from 'mongodb';
             offerResult = await offerCollection.aggregate([
               {
                 '$match': {
-                  'status': {$ne: -1},
+                  'status': {$in: [ 5,6 ]},
                   'company': {$in:comp},
                   'createBy' : email
                 }
