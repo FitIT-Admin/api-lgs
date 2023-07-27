@@ -23,6 +23,7 @@ import {authenticate} from '@loopback/authentication';
 //import {Product} from '../models';
 import { ProductRepository } from '../repositories/product.repository';
 import { OfferRepository } from '../repositories/offer.repository';
+import { OrderRepository } from '../repositories/order.repository';
 import { Product } from '../models/product.model';
 import { ObjectId } from 'mongodb';
 //import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
@@ -33,6 +34,7 @@ export class ProductController {
   constructor(
     @repository(ProductRepository) public productRepository: ProductRepository,
     @repository(OfferRepository) public offerRepository: OfferRepository,
+    @repository(OrderRepository) public orderRepository: OrderRepository
   ) {}
 
   @post('/product')
@@ -104,12 +106,12 @@ export class ProductController {
   ): Promise<Product[]> {
         try {
             let products = await this.productRepository.find(filter);
-            
             for(let i=0;i<products.length;i++){
                 let offers = await this.offerRepository.find({ where: {idProduct :products[i].id, status: {$ne: -1}}});
                 products[i].offer = offers;
+                let orders = await this.orderRepository.find({ where: {id :products[i].idOrder}});
+                products[i].order = orders; 
             }
-            
             return products;
         } catch(error) {
             throw new HttpErrors.ExpectationFailed('Error al buscar');
