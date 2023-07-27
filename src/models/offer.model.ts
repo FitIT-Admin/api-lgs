@@ -96,6 +96,16 @@ export class Offer extends TimestampEntity {
   
   @property.array(Object)
   offer?: Offer[];
+
+  @property({
+    type: 'date',
+  })
+  confirmedAtAdmin?: Date | null;
+
+  @property({
+    type: 'date',
+  })
+  confirmedAtClaimant?: Date | null;
     
   // Define well-known properties here
 
