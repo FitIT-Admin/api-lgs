@@ -53,6 +53,8 @@ import { ObjectId } from 'mongodb';
     })
     offer: Omit<Offer, 'id'>,
     ): Promise<Offer> {
+        offer.confirmedAtAdmin = null;
+        offer.confirmedAtClaimant = null;
         return await this.offerRepository.create(offer);
     }
     
