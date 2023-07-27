@@ -117,6 +117,39 @@ export class ProductController {
             throw new HttpErrors.ExpectationFailed('Error al buscar');
         }
     }
+   
+    @get('/product/byemail/{email}', {
+    responses: {
+      '200': {
+        description: 'Array of Products model instances',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'array',
+              items: getModelSchemaRef(Product, {includeRelations: true}),
+            },
+          },
+        },
+      },
+    },
+  })
+  @authenticate('jwt')
+  async findByEmail(
+    @param.path.string('email') email: string
+  ): Promise<Product[]> {
+        try {
+            let products = await this.productRepository.find();
+            for(let i=0;i<products.length;i++){
+                let offers = await this.offerRepository.find({ where: {idProduct :products[i].id, createBy: email, status: {$ne: -1}}});
+                products[i].offer = offers;
+                let orders = await this.orderRepository.find({ where: {id :products[i].idOrder}});
+                products[i].order = orders; 
+            }
+            return products;
+        } catch(error) {
+            throw new HttpErrors.ExpectationFailed('Error al buscar');
+        }
+    }
 
   @get('/product/{id}', {
     responses: {
