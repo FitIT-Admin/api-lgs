@@ -2,6 +2,7 @@ import {hasOne, model, property} from '@loopback/repository';
 import {UserCredentials} from '../models';
 import {TimestampEntity} from '../lib/timestamp-entity';
 import { SlugEntityTitle } from '../lib/slug-entity-title';
+import {Product, Order} from '.';
 
 @model()
 export class Offer extends TimestampEntity {
@@ -88,7 +89,13 @@ export class Offer extends TimestampEntity {
     type: 'string',
     required: true,
   })
-  idProduct: string;  
+  idProduct: string;
+  
+  @property.array(Object)
+  order?: Order[];
+  
+  @property.array(Object)
+  offer?: Offer[];
     
   // Define well-known properties here
 

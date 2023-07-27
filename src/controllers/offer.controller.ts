@@ -82,7 +82,6 @@ import { ObjectId } from 'mongodb';
         @param.path.string('rut') rut: string,
     ): Promise<any> {
         const offer = await this.orderRepository.find({where: {createBy: email, company: rut}});
-        console.log(offer);
         return offer;
     
     }
@@ -100,7 +99,6 @@ import { ObjectId } from 'mongodb';
         @param.path.string('email') email: string
     ): Promise<any> {
         const offer = await this.orderRepository.find({where: {createBy: email}});
-        console.log(offer);
         return offer;
     
     }
@@ -118,7 +116,6 @@ import { ObjectId } from 'mongodb';
         @param.path.string('id') id: string
     ): Promise<any> {
         const offer = await this.offerRepository.find({where: {idOrder: new ObjectId(id), status: {$ne: -1}}});
-        console.log(offer);
         return offer;
     
     }
@@ -137,7 +134,6 @@ import { ObjectId } from 'mongodb';
         @param.path.number('status') status: string
     ): Promise<any> {
         const offer = await this.offerRepository.find({where: {idOrder: new ObjectId(id), status: status}});
-        console.log(offer);
         return offer;
     
     }
@@ -155,7 +151,6 @@ import { ObjectId } from 'mongodb';
         @param.path.string('id') id: string
     ): Promise<any> {
         const offer = await this.offerRepository.find({where: {idProduct: new ObjectId(id), status: {$ne: -1}}});
-        console.log(offer);
         return offer;
     
     }
@@ -174,9 +169,7 @@ import { ObjectId } from 'mongodb';
         @param.path.number('status') status: string
     ): Promise<Offer[]> {
         const offer: Offer[] = await this.offerRepository.find({where: {idProduct: new ObjectId(id), status: status}, limit: 5});
-        console.log(offer);
         return offer;
-    
     }
     @put('/offer/all/{ids}')
     @response(204, {
@@ -249,9 +242,48 @@ import { ObjectId } from 'mongodb';
         let comp:any = [];
         for(let i=0;i<companies.length;i++){
             comp.push(companies[i]);
+        } 
+        //const allCompaniesOffer = await this.offerRepository.find({where: { status: {$ne: -1},company:{$in:comp}}});
+        //return allCompaniesOffer;
+        
+        let offerResult: any;
+        
+        const offerCollection = (this.offerRepository.dataSource.connector as any).collection("Offer");
+        if (offerCollection) {
+        
+            offerResult = await offerCollection.aggregate([
+              {
+                '$match': {
+                  'status': {$ne: -1},
+                  'company': {$in:comp}
+                }
+              }, {
+                '$lookup': {
+                  'from': 'Product',
+                  'localField': 'idProduct',
+                  'foreignField': '_id',
+                  'as': 'product'
+                }
+              }, {
+                '$lookup': {
+                  'from': 'Order',
+                  'localField': 'idOrder',
+                  'foreignField': '_id',
+                  'as': 'order'
+                }
+              }, {
+                '$addFields': {
+                  'product': { '$first': "$product" }, 'order': { '$first': "$order" }
+                }
+              }, 
+                {
+                '$sort': { _id: 1 }
+              }
+            ]).get();
         }
-        const allCompaniesOffer = await this.offerRepository.find({where: { status: {$ne: -1},company:{$in:comp}}});
-        return allCompaniesOffer;
+        
+        return (offerResult.length > 0) ? offerResult : [];
+        
       } catch(error) {
         console.log(error);
         throw new HttpErrors.ExpectationFailed('Error al buscar contador');

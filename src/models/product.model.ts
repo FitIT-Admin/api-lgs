@@ -1,5 +1,5 @@
 import {hasOne, model, property} from '@loopback/repository';
-import {Offer, UserCredentials} from '.';
+import {Offer, Order, UserCredentials} from '.';
 import {TimestampEntity} from '../lib/timestamp-entity';
 import { SlugEntityTitle } from '../lib/slug-entity-title';
 
@@ -24,6 +24,9 @@ export class Product extends TimestampEntity {
 
   @property.array(Object)
   offer?: Offer[];
+  
+  @property.array(Object)
+  order?: Order[];
 
   @property({
     type: 'number',
