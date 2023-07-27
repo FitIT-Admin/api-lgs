@@ -229,7 +229,7 @@ import { ObjectId } from 'mongodb';
         await this.offerRepository.replaceById(offer.id, offer);
         return true;
     }
-      
+    
     @post('/offer/active/')
     @response(200, {
       description: 'Offer model instance',
@@ -256,6 +256,68 @@ import { ObjectId } from 'mongodb';
                 '$match': {
                   'status': {$ne: -1},
                   'company': {$in:comp}
+                }
+              }, {
+                '$lookup': {
+                  'from': 'Product',
+                  'localField': 'idProduct',
+                  'foreignField': '_id',
+                  'as': 'product'
+                }
+              }, {
+                '$lookup': {
+                  'from': 'Order',
+                  'localField': 'idOrder',
+                  'foreignField': '_id',
+                  'as': 'order'
+                }
+              }, {
+                '$addFields': {
+                  'product': { '$first': "$product" }, 'order': { '$first': "$order" }
+                }
+              }, 
+                {
+                '$sort': { _id: 1 }
+              }
+            ]).get();
+        }
+        
+        return (offerResult.length > 0) ? offerResult : [];
+        
+      } catch(error) {
+        console.log(error);
+        throw new HttpErrors.ExpectationFailed('Error al buscar contador');
+      }
+    }
+    
+    @post('/offer/active/byemail/')
+    @response(200, {
+      description: 'Offer model instance',
+      content: {'application/json': {schema: getModelSchemaRef(Product)}},
+    })
+    async getByCompaniesAndEmail(
+      @requestBody() body:any
+    ): Promise<any> {
+      try {
+        let email = body.email;
+        let companies = body.companies;
+        let comp:any = [];
+        
+        for(let i=0;i<companies.length;i++){
+            comp.push(companies[i]);
+        } 
+    
+        let offerResult: any;
+        
+        const offerCollection = (this.offerRepository.dataSource.connector as any).collection("Offer");
+        if (offerCollection) {
+        
+            offerResult = await offerCollection.aggregate([
+              {
+                '$match': {
+                  'status': {$ne: -1},
+                  'company': {$in:comp},
+                  'createBy' : email
                 }
               }, {
                 '$lookup': {
