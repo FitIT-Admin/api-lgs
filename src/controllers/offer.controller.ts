@@ -58,17 +58,28 @@ import { ObjectId } from 'mongodb';
         return await this.offerRepository.create(offer);
     }
     
-    @put('/offer/{id}')
+    @post('/offer/update/{id}/{status}')
     @response(204, {
         description: 'Offer PUT success',
     })
     @authenticate('jwt')
-    async replaceById(
+    async replaceByStatusId(
         @param.path.string('id') id: string,
-        @requestBody() offer: Offer,
-    ): Promise<void> {
+        @param.path.string('status') status: number,
+    ): Promise<any> {
+        
+      try {
+        
+        const offer: Offer = await this.offerRepository.findById(id);
+        offer.status = status;
         await this.offerRepository.replaceById(id, offer);
+        
+      } catch(error) {
+        console.log(error);
+        throw new HttpErrors.ExpectationFailed('Error al actualizar oferta');
+      }   
     }
+
     @get('/offer/{email}/{rut}')
     @response(200, {
         description: 'Offer model instance',
@@ -275,7 +286,7 @@ import { ObjectId } from 'mongodb';
                 }
               }, {
                 '$addFields': {
-                  'product': { '$first': "$product" }, 'order': { '$first': "$order" }
+                  'product': { '$first': "$product" }, 'order': { '$first': "$order" },"id":"$_id"
                 }
               }, 
                 {
@@ -337,7 +348,7 @@ import { ObjectId } from 'mongodb';
                 }
               }, {
                 '$addFields': {
-                  'product': { '$first': "$product" }, 'order': { '$first': "$order" }
+                  'product': { '$first': "$product" }, 'order': { '$first': "$order" },"id":"$_id"
                 }
               }, 
                 {
