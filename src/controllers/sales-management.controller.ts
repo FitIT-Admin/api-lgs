@@ -133,13 +133,14 @@ import { OfferWithData } from '../interface/offer-with-data.interface';
             try {
               const offer: Offer = await this.offerRepository.findById(offer_id);
               if (offer) {
-                // Pagado (4) => Confirmar Pago (5)
+                // Offer = Pagado (4) => Confirmar Pago (5)
                 offer.status = 5;
+                offer.confirmedAtAdmin = new Date();
                 await this.offerRepository.updateById(offer.id, offer);
                 const offerProduct: Offer[] = await this.offerRepository.find({ where: { idProduct: new ObjectId(product_id), status: 4} });
                 const product: Product = await this.productRepository.findById(product_id);
                 if (offerProduct && offerProduct.length == 0 && product && product.status == 4) {
-                  // Pagado (4) => Confirmar Pago (5)
+                  // Product = Pagado (4) => Confirmar Pago (5)
                   product.status = 5;
                   await this.productRepository.updateById(product.id, product);
                 }

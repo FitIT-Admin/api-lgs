@@ -193,6 +193,7 @@ import { ObjectId } from 'mongodb';
         @param.path.string('ids') ids: string,
     ): Promise<void> {
         try {
+            // Offer = Vigente (2) => Aceptada (3)
             let offersId: string[] = ids.split(',');
             // Definir la condición para seleccionar los registros a actualizar
             const filter = {
@@ -201,7 +202,6 @@ import { ObjectId } from 'mongodb';
 
             // Definir el nuevo valor para el campo que se actualizará
             const update: {} = { status: 3 };
-
             console.log(await this.offerRepository.updateAll(update, filter));
 
             const offersConfirm: Offer[] = await this.offerRepository.find({ where: { idOffer: { $in: offersId } } })
@@ -214,10 +214,18 @@ import { ObjectId } from 'mongodb';
                     }
                     console.log(sum);
                     console.log(product.qty);
+                    // si la cantidad de productos ofertados supera la cantidad pedida, entonces Product = Publicado (1) / Adjudicado incompleto (2) => Adjudicado completo (3)
                     if (product.qty <= sum) {
                         product.qty = 0;
                         product.status = 3;
                         await this.productRepository.updateById(product.id, product);
+                        const productsInCart: Product[] = await this.productRepository.find({ where: { status: {$lt: 3}, idOrder: new ObjectId(product.idOrder)} });
+                        // Si no hay productos en estado 0, 1 o 2 entonces Order = Publicado (1) => Adjudicado (2)
+                        if (productsInCart && productsInCart.length == 0) {
+                          const order: Order = await this.orderRepository.findById(product.idOrder);
+                          order.status = 2;
+                          await this.orderRepository.updateById(order.id, order);
+                        }
                     } else {
                         product.status = 2;
                         product.qty = product.qty - sum;
