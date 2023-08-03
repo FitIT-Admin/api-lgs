@@ -12,8 +12,9 @@ import {PasswordHasher} from './services/hash.password.bcryptjs';
 import {FileUploadHandler} from './types';
 
 export namespace TokenServiceConstants {
+  
   export const TOKEN_SECRET_VALUE = 'C0.mpl@nz.!1';
-  export const TOKEN_EXPIRES_IN_VALUE = '600';
+  export const TOKEN_EXPIRES_IN_VALUE = (process.env.SESSIONTIME) ? String(process.env.SESSIONTIME) : '600';
 }
 
 export namespace TokenServiceBindings {
