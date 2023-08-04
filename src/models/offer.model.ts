@@ -78,6 +78,12 @@ export class Offer extends TimestampEntity {
     required: true,
   })
   cantidad: number;
+
+  @property({
+    type: 'number',
+    required: true,
+  })
+  commission: number;
   
   @property({
     type: 'string',
