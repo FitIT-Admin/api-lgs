@@ -9,17 +9,52 @@ import {
 } from '@loopback/repository';
 import {
   get,
-  getModelSchemaRef, param
+  put,
+  getModelSchemaRef, HttpErrors, param
 } from '@loopback/rest';
 import {AuditAuthentication} from '../models';
-import {AuditAuthenticationRepository} from '../repositories';
+import {AuditAuthenticationRepository, UserRepository} from '../repositories';
+import { ObjectId } from 'mongodb';
 
 export class AuditAuthenticationController {
   constructor(
     @repository(AuditAuthenticationRepository)
     public auditAuthenticationRepository: AuditAuthenticationRepository,
+    @repository(UserRepository)
+    public userRepository: UserRepository,
   ) { }
-
+  
+  @put('/audit-authentications/log-out/{email}/{type}', {
+    responses: {
+      '200': {
+        description: 'AuditAuthentication model instance'
+      },
+    },
+  })
+  //@authenticate('jwt')
+  async createByUserId(
+    @param.path.string('email') email: string,
+    @param.path.string('type') type: string,
+  ): Promise<boolean> {
+    try {
+      const user = await this.userRepository.findOne({ where: {email: email}});
+      const auditAuthenticationCollection = (this.auditAuthenticationRepository.dataSource.connector as any).collection("AuditAuthentication");
+      if (auditAuthenticationCollection && user) {
+        auditAuthenticationCollection.insertOne({
+          user: new ObjectId(user.id),
+          success: (type == 'jwt expired') ? -2 : (type == 'sign-out') ? -1 : -3,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        })
+        return true;
+      } else {
+        throw new HttpErrors.ExpectationFailed("auditAuthenticationCollection o user es null");
+      }
+    } catch(error) {
+      console.log(error);
+      throw new HttpErrors.ExpectationFailed();
+    }
+  }
   @get('/audit-authentications/count', {
     responses: {
       '200': {

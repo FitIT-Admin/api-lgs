@@ -67,7 +67,20 @@ import { OrderCompany } from '../interface/order-company.interface';
         @param.path.string('id') id: string,
         @requestBody() order: Order,
     ): Promise<void> {
-        await this.orderRepository.replaceById(id, order);
+        try {
+            await this.orderRepository.replaceById(id, order);
+            if (order.status == 1) {
+                // Definir la condición para seleccionar los registros a actualizar
+                const filter: {} = { idOrder: new ObjectId(id), status: 0};
+
+                // Definir el nuevo valor para el campo que se actualizará
+                const update: {} = { status: 1 };
+
+                console.log(await this.productRepository.updateAll(update, filter));
+            }
+        } catch (error) {
+            console.log(error);
+        }
     }
     @get('/order/{email}/{rut}')
     @response(200, {
@@ -100,25 +113,10 @@ import { OrderCompany } from '../interface/order-company.interface';
     @authenticate('jwt')
     async find(
         @param.path.string('email') email: string
-    ): Promise<any> {
+    ): Promise<Order[]> {
         const orders = await this.orderRepository.find({where: {createBy: email, status: {$ne: -1}}});
-        let ordersWithProductsAndCompany: OrderCompany[] = [];
-        for (let order of orders) {
-            const users = await this.userRepository.find({ where : { email : email}});
-            if (users && users.length > 0) {
-                let companyOrder = users[0].companies.filter(company => company.rut === order.company);
-                ordersWithProductsAndCompany.push({
-                    id: order.id,
-                    idOrder: order.idOrder,
-                    createBy: order.createBy,
-                    company: companyOrder[0],
-                    status: order.status,
-                    closingDate: order.closingDate,
-                });
-            }
-        }
         //console.log(orders);
-        return (ordersWithProductsAndCompany) ? ordersWithProductsAndCompany : [];
+        return (orders && orders.length > 0) ? orders : [];
     
     }
     @get('/order/{id}')

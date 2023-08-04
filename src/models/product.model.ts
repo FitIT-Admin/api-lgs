@@ -1,5 +1,5 @@
 import {hasOne, model, property} from '@loopback/repository';
-import {Offer, UserCredentials} from '.';
+import {Offer, Order, UserCredentials} from '.';
 import {TimestampEntity} from '../lib/timestamp-entity';
 import { SlugEntityTitle } from '../lib/slug-entity-title';
 
@@ -19,38 +19,14 @@ export class Product extends TimestampEntity {
 
   @property({
     type: 'string',
-    required: true,
   })
-  brand: string;
-
-  @property({
-    type: 'string',
-  })
-  model: string;
-
-  @property({
-    type: 'string',
-  })
-  year: string | null;
-
-  @property({
-    type: 'string',
-  })
-  engine: string | null;
-
-  @property({
-    type: 'string',
-    required: true,
-  })
-  chassis: string;
-
-  @property({
-    type: 'string',
-  })
-  description: string;
+  title: string;
 
   @property.array(Object)
-  offer: Offer[];
+  offer?: Offer[];
+  
+  @property.array(Object)
+  order?: Order[];
 
   @property({
     type: 'number',
@@ -62,7 +38,25 @@ export class Product extends TimestampEntity {
     type: 'number',
     required: true,
   })
+  originalQty: number;
+
+  @property({
+    type: 'number',
+    required: true,
+  })
   status: number;
+
+  @property({
+    type: 'string',
+    required: true,
+  })
+  createBy: string;
+
+  @property({
+    type: 'string',
+    required: true,
+  })
+  company: string;
   // Define well-known properties here
 
   // Indexer property to allow additional data

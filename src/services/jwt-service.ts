@@ -67,7 +67,7 @@ export class JWTService implements TokenService {
     // Generate a JSON Web Token
     let token: string;
     try {
-      this.jwtExpiresIn = 60 * 60 * 24;
+      this.jwtExpiresIn = (process.env.SESSIONTIME) ? parseInt(String(process.env.SESSIONTIME)) : 60 * 60 * 24;
       token = await signAsync(userInfoForToken, this.jwtSecret, {
         expiresIn: this.jwtExpiresIn,
       });
