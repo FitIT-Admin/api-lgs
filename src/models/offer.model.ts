@@ -77,7 +77,13 @@ export class Offer extends TimestampEntity {
     type: 'number',
     required: true,
   })
-  cantidad: number;
+  qty: number;
+
+  @property({
+    type: 'number',
+    required: true,
+  })
+  qtyOfferAccepted: number;
 
   @property({
     type: 'number',
