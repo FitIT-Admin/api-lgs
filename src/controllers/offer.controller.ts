@@ -184,33 +184,42 @@ import { ObjectId } from 'mongodb';
         const offer: Offer[] = await this.offerRepository.find({where: {idProduct: new ObjectId(id), status: status}, limit: 5});
         return offer;
     }
-    @put('/offer/all/{ids}')
+    @put('/offer/all/{ids}/{qty}')
     @response(204, {
         description: 'Order PUT success',
     })
     @authenticate('jwt')
     async replaceAllByIds(
         @param.path.string('ids') ids: string,
+        @param.path.string('qty') qty: string,
     ): Promise<void> {
         try {
+            
             // Offer = Vigente (2) => Aceptada (3)
             let offersId: string[] = ids.split(',');
-            // Definir la condición para seleccionar los registros a actualizar
+            let offersQty: string[] = qty.split(',');
+            const offersConfirm: Offer[] = await this.offerRepository.find({ where: { idOffer: { $in: offersId } } });
+            /*// Definir la condición para seleccionar los registros a actualizar
             const filter = {
                 idOffer: { $in: offersId },
             };
 
             // Definir el nuevo valor para el campo que se actualizará
             const update: {} = { status: 3 };
-            console.log(await this.offerRepository.updateAll(update, filter));
+            console.log(await this.offerRepository.updateAll(update, filter));*/
 
-            const offersConfirm: Offer[] = await this.offerRepository.find({ where: { idOffer: { $in: offersId } } })
+            
             if (offersConfirm &&  offersConfirm.length > 0) {
+                for (let i = 0 ; i < offersConfirm.length ; i++) {
+                  offersConfirm[i].status = 3;
+                  offersConfirm[i].qtyOfferAccepted = Number(offersQty[i]);
+                  await this.offerRepository.updateById(offersConfirm[i].id, offersConfirm[i]);
+                }
                 const product: Product = await this.productRepository.findById(offersConfirm[0].idProduct);
                 if (product) {
                     let sum: number = 0;
                     for (let i = 0 ; i < offersConfirm.length ; i++) {
-                        sum+= offersConfirm[i].cantidad;
+                        sum+= offersConfirm[i].qtyOfferAccepted;
                     }
                     console.log(sum);
                     console.log(product.qty);
