@@ -52,8 +52,6 @@ export class UserRepository extends DefaultCrudRepository<
     email: typeof User.prototype.id,
   ): Promise<UserCredentials | undefined> {
     try {
-      console.log("findCredentials");
-      console.log(email);
       return await this.userCredentials(email).get();
     } catch (err: unknown) {
       const error = err as any;

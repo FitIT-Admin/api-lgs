@@ -128,13 +128,17 @@ import { OfferWithData } from '../interface/offer-with-data.interface';
       async payOffers(
         @param.path.string('offer_id') offer_id: string,
         @param.path.string('product_id') product_id: string,
-        @param.path.string('order_id') order_id: string
+        @param.path.string('order_id') order_id: string,
+        @requestBody() photoPath: {photo: string}
       ): Promise<void> {
             try {
               const offer: Offer = await this.offerRepository.findById(offer_id);
               if (offer) {
                 // Offer = Pagado (4) => Confirmar Pago (5)
                 offer.status = 5;
+                if (photoPath.photo !== '') {
+                  offer.photoPaymentReceiptAtAdmin = photoPath.photo;
+                }
                 offer.confirmedAtAdmin = new Date();
                 await this.offerRepository.updateById(offer.id, offer);
                 const offerProduct: Offer[] = await this.offerRepository.find({ where: { idProduct: new ObjectId(product_id), status: 4} });

@@ -272,7 +272,6 @@ export class UserController {
   ): Promise<Object> {
 
     var user = await this.userRepository.findOne({where: {email: credentials.email}});
-    console.log(user);
     if (user){
       const role = await this.findRoleSlugOrId(user.role);
       const verifyUser = await this.userService.verifyCredentials(credentials);
