@@ -176,7 +176,8 @@ import { OfferWithData } from '../interface/offer-with-data.interface';
       })
       @authenticate('jwt')
       async payOffers(
-        @param.path.string('id') id: string
+        @param.path.string('id') id: string,
+        @requestBody() photoPath: {photo: string}
       ): Promise<void> {
             try {
                 const orders: Order[] = await this.orderRepository.find({where: { idOrder: id}});
@@ -214,7 +215,7 @@ import { OfferWithData } from '../interface/offer-with-data.interface';
                         };
 
                         // Definir el nuevo valor para el campo que se actualizará
-                        const update: {} = { status: 4, confirmedAtClaimant: new Date() };
+                        const update: {} = { status: 4, confirmedAtClaimant: new Date(), photoPaymentReceiptAtClaimant: photoPath.photo };
 
                         // Ofertas adjudicadas -> Pagadas
                         console.log(await this.offerRepository.updateAll(update, filter));

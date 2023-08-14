@@ -41,6 +41,18 @@ export class Offer extends TimestampEntity {
     required: false,
   })
   photo: string;
+
+  @property({
+    type: 'string',
+    required: false,
+  })
+  photoPaymentReceiptAtClaimant: string;
+
+  @property({
+    type: 'string',
+    required: false,
+  })
+  photoPaymentReceiptAtAdmin: string;
   
   @property({
     type: 'string',
