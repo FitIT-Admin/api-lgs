@@ -51,8 +51,8 @@ export class User extends TimestampEntity {
   })
   status: number;
 
-  @property.array(Object)
-  companies: {rut: string, name: string, direction: string, phone: string, accountNumber: number, accountType: string, bank: string, status: number}[];
+  /*@property.array(Object)
+  companies: {rut: string, name: string, direction: string, phone: string, accountNumber: number, accountType: string, bank: string, status: number}[];*/
 
   @hasOne(() => UserCredentials)
   userCredentials: UserCredentials;
