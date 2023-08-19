@@ -26,3 +26,5 @@ export * from './referer.model';
 export * from './order.model';
 export * from './offer.model';
 export * from './product.model';
+export * from './vehicle-list.model';
+export * from './company.model';

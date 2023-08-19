@@ -79,9 +79,9 @@ import { OfferWithData } from '../interface/offer-with-data.interface';
                     }
                   }, {
                     '$lookup': {
-                      'from': 'User',
-                      'localField': 'createBy',
-                      'foreignField': 'email',
+                      'from': 'Company',
+                      'localField': 'company',
+                      'foreignField': 'rut',
                       'as': 'commerce'
                     }
                   }, {
@@ -92,9 +92,9 @@ import { OfferWithData } from '../interface/offer-with-data.interface';
                     }
                   }, {
                     '$lookup': {
-                      'from': 'User',
-                      'localField': 'order.createBy',
-                      'foreignField': 'email',
+                      'from': 'Company',
+                      'localField': 'order.company',
+                      'foreignField': 'rut',
                       'as': 'workshop'
                     }
                   }, {

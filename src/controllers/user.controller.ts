@@ -334,7 +334,6 @@ export class UserController {
         user.lastName = lastName;
         user.secondLastName = secondLastName;
         user.role = credentials.typeUser;
-        user.companies = [];
         user.failedAttempts = 0;
         user.status = 0;
         var newUser = await this.userRepository.create(user);

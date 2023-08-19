@@ -8,6 +8,12 @@ export class Company extends TimestampEntity {
     type: 'string',
     id: true,
   })
+  id: string;
+
+  @property({
+    type: 'string',
+    required: true,
+  })
   rut: string;
 
   @property({
@@ -15,6 +21,18 @@ export class Company extends TimestampEntity {
     required: true,
   })
   name: string;
+
+  @property({
+    type: 'string',
+    required: true,
+  })
+  type: string;
+
+  @property({
+    type: 'string',
+    required: true,
+  })
+  createBy: string;
 
   @property({
     type: 'string',
@@ -45,6 +63,9 @@ export class Company extends TimestampEntity {
     required: true,
   })
   bank: string;
+
+  @property.array(String)
+  make: string[];
 
   @property({
     type: 'number',

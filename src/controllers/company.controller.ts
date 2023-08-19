@@ -1,43 +1,125 @@
 import {
-    Count,
-    CountSchema,
-    Filter,
-    FilterExcludingWhere,
-    repository,
-    Where,
-  } from '@loopback/repository';
-  import {
-    post,
-    param,
-    get,
-    HttpErrors,
-    getModelSchemaRef,
-    patch,
-    put,
-    del,
-    requestBody,
-    response,
-  } from '@loopback/rest';
-  import {authenticate} from '@loopback/authentication';
-  import { ServiceRepository } from '../repositories/service.repository';
-  import { Service } from '../models/service.model';
-import { OfferRepository, OrderRepository, UserRepository } from '../repositories';
+  Count,
+  CountSchema,
+  Filter,
+  FilterExcludingWhere,
+  repository,
+  Where,
+} from '@loopback/repository';
+import {
+  post,
+  param,
+  get,
+  HttpErrors,
+  getModelSchemaRef,
+  patch,
+  put,
+  del,
+  requestBody,
+  response,
+} from '@loopback/rest';
+import {authenticate} from '@loopback/authentication';
+import { CompanyRepository, OfferRepository, OrderRepository, UserRepository } from '../repositories';
 import { Company } from '../models/company.model';
 import { User } from '../models';
   export class CompanyController {
     
     constructor(
-      @repository(ServiceRepository) public serviceRepository : ServiceRepository,
+      @repository(CompanyRepository) public companyRepository : CompanyRepository,
       @repository(UserRepository) public userRepository: UserRepository,
       @repository(OrderRepository) public orderRepository: OrderRepository,
       @repository(OfferRepository) public offerRepository: OfferRepository,
     ) {}
-      /**
-       * Crea un nuevo company para el usuario:
-       * @param user user con un company nuevo dentro del array companies
-       * @returns true en el caso en que el rut no este repetido, si es asi devuelve un error.
-       */
-    @put('/companies', {
+
+    @post('/company')
+    @response(200, {
+        description: 'Company model instance'
+    })
+    @authenticate('jwt')
+    async create(
+    @requestBody({
+        content: {
+            'application/json': {
+            schema: getModelSchemaRef(Company, {
+                title: 'NewCompany',
+                exclude: ['id'],
+                }),
+            },
+        },
+    })
+    company: Omit<Company, 'id'>,
+    ): Promise<Company> {
+      var user: User[] = await this.userRepository.find({where: {email: company.createBy}});
+      if (user && user.length > 0) {
+        const searchCompany: Company[] = await this.companyRepository.find({where: {rut: company.rut}});
+        if (!searchCompany || searchCompany.length <= 0) {
+          user[0].status = 1;
+          await this.userRepository.updateById(user[0].id, user[0]);
+          return await this.companyRepository.create(company);
+        } else {
+          throw new HttpErrors.Unauthorized('rut repetido');
+        }
+      } else {
+        throw new HttpErrors.Unauthorized('Usuario no se encuentra en el sistema');
+      }
+    }
+    @get('/companies/count/{id}')
+    @response(200, {
+      description: 'Company model count',
+      content: {
+        'application/json': {
+          schema: getModelSchemaRef(Company, {includeRelations: true}),
+        }
+      }
+    })
+    @authenticate('jwt')
+    async count(
+        @param.path.string('id') id: string
+    ): Promise<number> {
+      try {
+        const companies: {count: number} = await this.companyRepository.count({createBy: id});
+        return (companies) ? companies.count : 0;
+      } catch(error) {
+        console.log(error);
+        throw new HttpErrors.ExpectationFailed('Error al buscar contador de Company');
+      }
+    }
+    @get('/companies/{id}')
+    @response(200, {
+      description: 'Array of Company model instances',
+      content: {
+        'application/json': {
+          schema: getModelSchemaRef(Company, {includeRelations: true}),
+        }
+      }
+    })
+    @authenticate('jwt')
+    async find(
+        @param.path.string('id') id: string
+    ): Promise<Company[]> {
+      try {
+        const companies: Company[] = await this.companyRepository.find({where: {createBy: id}});
+        return (companies && companies.length > 0) ? companies : [];
+      } catch(error) {
+        console.log(error);
+        throw new HttpErrors.ExpectationFailed('Error al buscar Companies');
+      }
+    }
+    @get('/status/user/{email}', {
+      responses: {
+        '200': {
+          description: 'User GET success',
+        },
+      },
+    })
+    @authenticate('jwt')
+    async searchStatusUser(
+      @param.path.string('email') email: string
+    ): Promise<any> {
+        const user = await this.userRepository.find({ where : { email : email}});
+        return user[0].status;
+    }
+    /*@put('/companies', {
       responses: {
         '204': {
           description: 'User PUT success',
@@ -120,12 +202,6 @@ import { User } from '../models';
         }
         
     }
-    /**
-     * Actualiza o Edita un company:
-     * @param rut rut de company que se quiere editar
-     * @param user user con cambios de company
-     * @returns true en el caso de que se modificara correctamente el company
-     */
     @put('/companies/update/{rut}', {
       responses: {
         '204': {
@@ -157,11 +233,6 @@ import { User } from '../models';
         await this.userRepository.updateById(users[0].id, users[0]);
         return true;
     }
-    /**
-     * Buscar companies count
-     * @param id email de usuario
-     * @returns la cantidad de companies que tiene el user
-     */
     @get('/companies/count/{id}')
     @response(200, {
       description: 'Company model count',
@@ -213,11 +284,6 @@ import { User } from '../models';
       }
       return 0;
     }
-    /**
-     * Buscar companies:
-     * @param id email de usuario
-     * @returns user con companies distintos de status -1
-     */
     @get('/companies/{id}')
     @response(200, {
       description: 'Array of Company model instances',
@@ -269,12 +335,6 @@ import { User } from '../models';
       }
       return 0;
     }
-    /**
-     * Eliminar company:
-     * @param id email de usuario
-     * @param rut rut de company
-     * @returns true en el caso en que se eliminara correctamente
-     */
     @put('/companies/{id}/{rut}')
     @response(204, {
       description: 'Company DELETE success',
@@ -349,12 +409,6 @@ import { User } from '../models';
       await this.userRepository.updateById(users[0].id, users[0]);
       return true;
     }
-    /**
-     * Buscar status de user:
-     * Se creo esta funcion para que el sistema conozca el status del usuario mientras se mueve dentro de la página
-     * @param email email de usuario
-     * @returns el status del usuario
-     */
     @get('/status/user/{email}', {
       responses: {
         '204': {
@@ -368,7 +422,7 @@ import { User } from '../models';
     ): Promise<any> {
         const user = await this.userRepository.find({ where : { email : email}});
         return user[0].status;
-    }
+    }*/
   }
   
   
