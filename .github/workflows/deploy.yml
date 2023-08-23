@@ -2,12 +2,12 @@ name: LoopBack 4 deployment.
 
 on:
   push:
-    branches: ["dev"]
+    branches: ["fb4"]
 
 jobs:
   deploy-dev:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/dev'
+    if: github.ref == 'refs/heads/fb4'
     steps:
       - uses: actions/checkout@v3
 
@@ -23,13 +23,13 @@ jobs:
       - name: Install SSH Key and known_hosts
         uses: shimataro/ssh-key-action@v2.5.1
         with:
-          key: ${{ secrets.SUBDEV_SSH_PRIVATE_KEY }}
-          known_hosts: ${{ secrets.SUBDEV_KNOWN_HOSTS }}
+          key: ${{ secrets.FB4_SSH_PRIVATE_KEY }}
+          known_hosts: ${{ secrets.FB4_KNOWN_HOSTS }}
 
       - name: Deploy to server
-        run: rsync -avz ./ ${{ secrets.SUBDEV_SSH_USER }}@${{ secrets.SUBDEV_SSH_HOST }}:/home/developer/api
+        run: rsync -avz ./ ${{ secrets.FB4_SSH_USER }}@${{ secrets.FB4_SSH_HOST }}:/home/developer/api-lux
 
       - name: Restart the app
-        run: ssh ${{ secrets.SUBDEV_SSH_USER }}@${{ secrets.SUBDEV_SSH_HOST }} 'cd /home/developer/api/ && pm2 restart ecosystem.config.js'
+        run: ssh ${{ secrets.FB4_SSH_USER }}@${{ secrets.FB4_SSH_HOST }} 'cd /home/developer/api-lux/ && pm2 restart ecosystem.config.js'
 
   
