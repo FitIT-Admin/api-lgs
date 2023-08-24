@@ -28,3 +28,4 @@ export * from './offer.model';
 export * from './product.model';
 export * from './vehicle-list.model';
 export * from './company.model';
+export * from './notification.model';

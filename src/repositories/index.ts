@@ -28,3 +28,4 @@ export * from './order.repository';
 export * from './product.repository';
 export * from './vehicle-list.repository';
 export * from './company.repository';
+export * from './notification.repository';

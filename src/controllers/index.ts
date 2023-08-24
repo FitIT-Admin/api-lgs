@@ -23,3 +23,4 @@ export * from './referer.controller';
 export * from './product.controller';
 export * from './offer.controller';
 export * from './vehicle-list.controller';
+export * from './notification.controller';
