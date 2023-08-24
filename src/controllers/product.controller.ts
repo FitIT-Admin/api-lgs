@@ -26,6 +26,9 @@ import { OfferRepository } from '../repositories/offer.repository';
 import { OrderRepository } from '../repositories/order.repository';
 import { Product } from '../models/product.model';
 import { ObjectId } from 'mongodb';
+import { OfferWithData } from '../interface/offer-with-data.interface';
+import { OrderWithProductOffer } from '../interface/order-with-product-offer.interface';
+import { Offer, Order } from '../models';
 //import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
 //import {inject} from '@loopback/core';
 
@@ -118,7 +121,7 @@ export class ProductController {
         }
     }
    
-    @get('/product/byemail/{email}', {
+    @get('/product/byemail/filter/{email}/{brand}', {
     responses: {
       '200': {
         description: 'Array of Products model instances',
@@ -134,22 +137,65 @@ export class ProductController {
     },
   })
   @authenticate('jwt')
-  async findByEmail(
-    @param.path.string('email') email: string
-  ): Promise<Product[]> {
+  async findOffersFilter(
+    @param.path.string('email') email: string,
+    @param.path.string('brand') brand: string
+  ): Promise<OrderWithProductOffer[]> {
         try {
-            let products = await this.productRepository.find();
-            for(let i=0;i<products.length;i++){
-                let offers = await this.offerRepository.find({ where: {idProduct :products[i].id, createBy: email, status: {$ne: -1}}});
-                products[i].offer = offers;
-                let orders = await this.orderRepository.find({ where: {id :products[i].idOrder}});
-                products[i].order = orders; 
+          let data: OrderWithProductOffer[] = []
+          let brands: string[] = brand.split(',');
+          const orders: Order[] = await this.orderRepository.find({ where: { status: {inq: [1,2]}, brand: { $in: brands}}, order: ['createdAt DESC']});
+          for (let order of orders) {
+            const products: Product[] = await this.productRepository.find({ where: { status: { inq: [1,2]}, idOrder: new ObjectId(order.id)}, order: ['createdAt DESC']});
+            if (products && products.length > 0) {
+              for (let product of products) {
+                data.push({
+                  order: order,
+                  product: product,
+                  offers: []
+                });
+                const offers: Offer[] = await this.offerRepository.find({ where: { createBy: email, idProduct: new ObjectId(product.id), status: { inq: [2,3]} }});
+                data[data.length-1].offers = offers
+              }
             }
-            return products;
+          }
+          return (data && data.length > 0) ? data : [];
         } catch(error) {
             throw new HttpErrors.ExpectationFailed('Error al buscar');
         }
     }
+    @get('/product/byemail/{email}', {
+      responses: {
+        '200': {
+          description: 'Array of Products model instances',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'array',
+                items: getModelSchemaRef(Product, {includeRelations: true}),
+              },
+            },
+          },
+        },
+      },
+    })
+    @authenticate('jwt')
+    async findByEmail(
+      @param.path.string('email') email: string
+    ): Promise<Product[]> {
+          try {
+              let products: Product[] = await this.productRepository.find({ where: { status: { inq: [1, 2]}}, order: ['createdAt DESC']});
+              for(let i=0;i<products.length;i++){
+                  let offers = await this.offerRepository.find({ where: {idProduct :products[i].id, createBy: email, status: {$ne: -1}}});
+                  products[i].offer = offers;
+                  let orders = await this.orderRepository.find({ where: {id :products[i].idOrder}});
+                  products[i].order = orders; 
+              }
+              return products;
+          } catch(error) {
+              throw new HttpErrors.ExpectationFailed('Error al buscar');
+          }
+      }
 
   @get('/product/{id}', {
     responses: {

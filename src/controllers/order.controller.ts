@@ -114,7 +114,7 @@ import { OrderCompany } from '../interface/order-company.interface';
     async find(
         @param.path.string('email') email: string
     ): Promise<Order[]> {
-        const orders = await this.orderRepository.find({where: {createBy: email, status: {$ne: -1}}});
+        const orders = await this.orderRepository.find({where: {createBy: email, status: {inq: [0, 1, 2]}}});
         //console.log(orders);
         return (orders && orders.length > 0) ? orders : [];
     

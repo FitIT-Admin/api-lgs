@@ -40,7 +40,6 @@ export class MyUserService implements UserService<User, Credentials> {
       throw new HttpErrors.Unauthorized("sign-in.withoutcred");
     } else {
       const credentialsFound = await this.userRepository.findCredentials(foundUser.email);
-      console.log(credentialsFound);
       if (!credentialsFound) {
         throw new HttpErrors.Unauthorized("sign-in.withoutcred");
       }
@@ -57,15 +56,17 @@ export class MyUserService implements UserService<User, Credentials> {
             await this.userRepository.updateById(foundUser.id, {failedAttempts: failedAttempts})
             await this.auditAuthenticationRepository.create(registerAuditAuth(foundUser.id, 0));
             let attempts = 3 - failedAttempts;
+            console.log(new Date().toLocaleString('es-ES') + ', ' + credentialsFound.userId + ', Login Failed - attempts:'+ attempts.toString());
             throw new HttpErrors.Unauthorized("Contraseña incorrecta, le quedan " + attempts.toString() + " intentos.");
           } else {
             /** Bloqued User */
-
+            console.log(new Date().toLocaleString('es-ES') + ', ' + credentialsFound.userId + ', Login Failed - User Blocked');
             await this.userRepository.updateById(foundUser.id, {status: 2, failedAttempts: 3})
             await this.auditActionsRepository.create(registerAuditAction(foundUser.id, "Cuenta bloqueada por intentos falladios"));
             throw new HttpErrors.Unauthorized("Cuenta bloqueada por intentos fallidos");
           }
         } else {
+          console.log(new Date().toLocaleString('es-ES') + ', ' + credentialsFound.userId + ', Login OK');
           await this.userRepository.updateById(foundUser.id, {failedAttempts: 0})
         }
 

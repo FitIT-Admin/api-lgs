@@ -24,8 +24,8 @@ import {authenticate} from '@loopback/authentication';
 import { ProductRepository } from '../repositories/product.repository';
 import { Product } from '../models/product.model';
 import { ObjectId } from 'mongodb';
-import { OfferRepository, OrderRepository } from '../repositories';
-import { Offer, Order } from '../models';
+import { CompanyRepository, NotificationRepository, OfferRepository, OrderRepository, UserRepository } from '../repositories';
+import { Company, Notification, Offer, Order, User } from '../models';
 import { OfferWithData } from '../interface/offer-with-data.interface';
   //import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
   //import {inject} from '@loopback/core';
@@ -33,7 +33,9 @@ import { OfferWithData } from '../interface/offer-with-data.interface';
   
   export class CartController {
     constructor(
-      //@repository(UserRepository) public userRepository: UserRepository,
+      @repository(NotificationRepository) public notificationRepository : NotificationRepository,
+      @repository(UserRepository) public userRepository: UserRepository,
+      @repository(CompanyRepository) public companyRepository: CompanyRepository,
       @repository(ProductRepository) public productRepository: ProductRepository,
       @repository(OrderRepository) public orderRepository: OrderRepository,
       @repository(OfferRepository) public offerRepository: OfferRepository,
@@ -176,14 +178,25 @@ import { OfferWithData } from '../interface/offer-with-data.interface';
       })
       @authenticate('jwt')
       async payOffers(
-        @param.path.string('id') id: string
+        @param.path.string('id') id: string,
+        @requestBody() photoPath: {photo: string}
       ): Promise<void> {
             try {
                 const orders: Order[] = await this.orderRepository.find({where: { idOrder: id}});
                 if (orders && orders.length > 0) {
                   const products: Product[] = await this.productRepository.find({ where: { status: { inq: [2, 3] }, idOrder: new ObjectId(orders[0].id) } });
+                  const users: User[] = await this.userRepository.find({ where: { status: 1, role: 'administrador'}});
                   if (products && products.length > 0) {
                     for (let product of products) {
+                      if (users && users.length > 0) {
+                        for (let user of users) {
+                          var link: string = process.env.FRONTEND_URL+"/admin/users/sales-management";
+                          const workshop: Company[] = await this.companyRepository.find({where: {rut: product.company}});
+                          await this.createNotifications('Web', {email: user.email, rut: '', phone: ''}, { email: '', rut: '', phone: ''},'Oferta pagada', 'Admin: has recibido un pago de '+workshop[0].name+', revisa pronto y confirma al comercio, el timer está corriendo!', link, 0, false);
+                          await this.createNotifications('SMS', {email: user.email, rut: '', phone: ''}, { email: '', rut: '', phone: ''},'Oferta pagada', 'Admin: has recibido un pago de '+workshop[0].name+', revisa pronto y confirma al comercio, el timer está corriendo!', link, 0, false);
+                          await this.createNotifications('Mail', {email: user.email, rut: '', phone: ''}, { email: '', rut: '', phone: ''},'Oferta pagada', 'Admin: has recibido un pago de '+workshop[0].name+', revisa pronto y confirma al comercio, el timer está corriendo!', link, 0, false);
+                        }
+                      }
                       // Product = Adjudicada pago completo (3) => Pagado (4)
                       if (product.status == 3) {
                         product.status = 4;
@@ -214,7 +227,7 @@ import { OfferWithData } from '../interface/offer-with-data.interface';
                         };
 
                         // Definir el nuevo valor para el campo que se actualizará
-                        const update: {} = { status: 4, confirmedAtClaimant: new Date() };
+                        const update: {} = { status: 4, confirmedAtClaimant: new Date(), photoPaymentReceiptAtClaimant: photoPath.photo };
 
                         // Ofertas adjudicadas -> Pagadas
                         console.log(await this.offerRepository.updateAll(update, filter));
@@ -260,6 +273,40 @@ import { OfferWithData } from '../interface/offer-with-data.interface';
               throw new HttpErrors.ExpectationFailed('Error al buscar por id');
             }
       }
+      /**
+     * Creación de una notificación estandar
+     * @param channel canal de la notificación (SMS, Web, Mail, etc)
+     * @param recipent datos de usuario destino
+     * @param sender datos de usuario origen
+     * @param title titulo de notificación
+     * @param message mensaje de notificación
+     * @param link puede tener un link para mayor acceso
+     * @param pushAttempts contador de veces que fue envíado
+     * @param send si el usuario le llego la notificación o no
+     */
+    private async createNotifications(channel: string, recipent: {email: string, rut: string, phone: string}, sender: {email: string, rut: string, phone: string}, title: string, message: string, link: string, pushAttempts: number, send: boolean) {
+      var notification = new Notification();
+      notification.channel = channel
+      notification.recipient = {
+        email: recipent.email,
+        rut: recipent.rut,
+        phone: recipent.phone
+      }
+      notification.sender = {
+        email: sender.email,
+        rut: sender.rut,
+        phone: sender.phone
+      }
+      notification.title = title;
+      notification.message = message;
+      notification.link = link;
+      notification.viewed = false;
+      notification.viewedDate = new Date(0);
+      notification.status = 0;
+      notification.pushAttempts = pushAttempts;
+      notification.send = send;
+      await this.notificationRepository.create(notification);
+    }
     
   }
   

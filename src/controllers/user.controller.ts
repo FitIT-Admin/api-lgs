@@ -272,7 +272,6 @@ export class UserController {
   ): Promise<Object> {
 
     var user = await this.userRepository.findOne({where: {email: credentials.email}});
-    console.log(user);
     if (user){
       const role = await this.findRoleSlugOrId(user.role);
       const verifyUser = await this.userService.verifyCredentials(credentials);
@@ -335,9 +334,8 @@ export class UserController {
         user.lastName = lastName;
         user.secondLastName = secondLastName;
         user.role = credentials.typeUser;
-        user.companies = [];
         user.failedAttempts = 0;
-        user.status = 0;
+        user.status = (credentials.typeUser === 'taller' || credentials.typeUser === 'comercio') ? 0 : 1;
         var newUser = await this.userRepository.create(user);
         // Crear credenciales de user
         userCredentials.userId = newUser.email;
