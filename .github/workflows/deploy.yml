@@ -2,12 +2,12 @@ name: LoopBack 4 deployment.
 
 on:
   push:
-    branches: ["dev"]
+    branches: ["prod"]
 
 jobs:
   deploy-dev:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/dev'
+    if: github.ref == 'refs/heads/prod'
     steps:
       - uses: actions/checkout@v3
 
