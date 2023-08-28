@@ -5,7 +5,7 @@ on:
     branches: ["prod"]
 
 jobs:
-  deploy-dev:
+  deploy-prod:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/prod'
     steps:
