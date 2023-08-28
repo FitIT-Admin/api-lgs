@@ -27,9 +27,9 @@ jobs:
           known_hosts: ${{ secrets.SUBDEV_KNOWN_HOSTS }}
 
       - name: Deploy to server
-        run: rsync -avz ./ ${{ secrets.SUBDEV_SSH_USER }}@${{ secrets.SUBDEV_SSH_HOST }}:/home/developer/api
+        run: rsync -avz ./ ${{ secrets.SUBDEV_SSH_USER }}@${{ secrets.SUBDEV_SSH_HOST }}:/home/developer/api-lux
 
       - name: Restart the app
-        run: ssh ${{ secrets.SUBDEV_SSH_USER }}@${{ secrets.SUBDEV_SSH_HOST }} 'cd /home/developer/api/ && pm2 restart ecosystem.config.js'
+        run: ssh ${{ secrets.SUBDEV_SSH_USER }}@${{ secrets.SUBDEV_SSH_HOST }} 'cd /home/developer/api-lux/ && pm2 restart ecosystem.config.js'
 
   
