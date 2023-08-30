@@ -2,9 +2,39 @@ name: LoopBack 4 deployment.
 
 on:
   push:
-    branches: ["prod"]
+    branches: ["dev","prod"]
 
 jobs:
+  deploy-dev:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/dev'
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Use Node.js 14.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 14.x
+          cache: "npm"
+
+      - name: Install dependencies and build
+        run: npm ci && npm run build
+
+      - name: Install SSH Key and known_hosts
+        uses: shimataro/ssh-key-action@v2.5.1
+        with:
+          key: ${{ secrets.FB7_SSH_PRIVATE_KEY }}
+          known_hosts: ${{ secrets.FB7_KNOWN_HOSTS }}
+
+      - name: Deploy to server
+        run: rsync -avz ./ ${{ secrets.FB7_SSH_USER }}@${{ secrets.FB7_SSH_HOST }}:/home/developer/api-lux
+
+      - name: Restart the app
+        run: ssh ${{ secrets.FB7_SSH_USER }}@${{ secrets.FB7_SSH_HOST }} 'cd /home/developer/api-lux && pm2 restart ecosystem.config.js'
+
+
+  
+
   deploy-prod:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/prod'
@@ -31,5 +61,3 @@ jobs:
 
       - name: Restart the app
         run: ssh ${{ secrets.SUBDEV_SSH_USER }}@${{ secrets.SUBDEV_SSH_HOST }} 'cd /home/developer/api-lux/ && pm2 restart ecosystem.config.js'
-
-  
