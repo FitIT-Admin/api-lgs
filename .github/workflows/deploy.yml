@@ -30,7 +30,7 @@ jobs:
         run: rsync -avz ./ ${{ secrets.FB7_SSH_USER }}@${{ secrets.FB7_SSH_HOST }}:/home/developer/api-lux
 
       - name: Restart the app
-        run: ssh ${{ secrets.FB7_SSH_USER }}@${{ secrets.FB7_SSH_HOST }} 'cd /home/developer/api-lux && pm2 restart ecosystem.config.js'
+        run: ssh ${{ secrets.FB7_SSH_USER }}@${{ secrets.FB7_SSH_HOST }} 'cd /home/developer/api-lux/ && pm2 restart ecosystem.config.js'
 
 
   
