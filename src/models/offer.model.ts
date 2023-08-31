@@ -130,6 +130,16 @@ export class Offer extends TimestampEntity {
     type: 'date',
   })
   confirmedAtClaimant?: Date | null;
+
+  @property({
+    type: 'string',
+  })
+  acceptedByUser?: string;
+
+  @property({
+    type: 'string',
+  })
+  acceptedByCompany?: string;
     
   // Define well-known properties here
 
