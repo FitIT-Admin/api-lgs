@@ -231,9 +231,14 @@ import { ObjectId } from 'mongodb';
 
             
             if (offersConfirm &&  offersConfirm.length > 0) {
+                const product: Product = await this.productRepository.findById(offersConfirm[0].idProduct);
                 for (let i = 0 ; i < offersConfirm.length ; i++) {
                   offersConfirm[i].status = 3;
                   offersConfirm[i].qtyOfferAccepted = Number(offersQty[i]);
+                  if (product) {
+                    offersConfirm[i].acceptedByUser = product.createBy;
+                    offersConfirm[i].acceptedByCompany = product.company;
+                  }
                   await this.offerRepository.updateById(offersConfirm[i].id, offersConfirm[i]);
                   const commerce: Company[] = await this.companyRepository.find({ where: { rut: offersConfirm[i].company }});
                   if (commerce && commerce.length > 0) {
@@ -243,7 +248,6 @@ import { ObjectId } from 'mongodb';
                     await this.createNotifications('Mail', {email: commerce[0].createBy, rut: commerce[0].rut, phone: commerce[0].phone}, { email: '', rut: '', phone: ''}, 'Oferta ingresada', commerce[0].name+': Buenas noticias, tu oferta fue aceptada! Reserva el producto a la espera del pago. Revisa tu Mesón Virtual', link, 0, false);
                   }
                 }
-                const product: Product = await this.productRepository.findById(offersConfirm[0].idProduct);
                 if (product) {
                     let sum: number = 0;
                     for (let i = 0 ; i < offersConfirm.length ; i++) {
