@@ -102,6 +102,11 @@ export class Offer extends TimestampEntity {
     required: true,
   })
   commission: number;
+
+  @property({
+    type: 'string',
+  })
+  make?: string;
   
   @property({
     type: 'string',
