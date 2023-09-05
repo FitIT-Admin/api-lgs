@@ -114,6 +114,7 @@ import { OfferWithData } from '../interface/offer-with-data.interface';
                       {
                         '$match': {
                           'status': { '$in': [4, 5, 6, 7]},
+                          'acceptedByUser': email
                         }
                       }, {
                         '$lookup': {

@@ -19,9 +19,8 @@ import {
     response,
   } from '@loopback/rest';
   import {authenticate} from '@loopback/authentication';
-  import { ServiceRepository } from '../repositories/service.repository';
-import { OrderRepository, UserRepository } from '../repositories';
-import { Order, User } from '../models';
+import { CompanyRepository, NotificationRepository, OrderRepository, UserRepository } from '../repositories';
+import { Company, Notification, Order, User } from '../models';
 import { ObjectId } from 'mongodb';
 import { Product } from '../models/product.model';
 import { ProductRepository } from '../repositories/product.repository';
@@ -30,7 +29,8 @@ import { OrderCompany } from '../interface/order-company.interface';
   export class OrderController {
     
     constructor(
-        @repository(ServiceRepository) public serviceRepository : ServiceRepository,
+        @repository(NotificationRepository) public notificationRepository : NotificationRepository,
+        @repository(CompanyRepository) public companyRepository: CompanyRepository,
         @repository(UserRepository) public userRepository: UserRepository,
         @repository(OrderRepository) public orderRepository: OrderRepository,
         @repository(ProductRepository) public productRepository: ProductRepository,
@@ -77,6 +77,40 @@ import { OrderCompany } from '../interface/order-company.interface';
                 const update: {} = { status: 1 };
 
                 console.log(await this.productRepository.updateAll(update, filter));
+                let commerceResult: any[] = [];
+                const companyCollection = (this.companyRepository.dataSource.connector as any).collection("Company");
+                if (companyCollection) {
+                    commerceResult = await companyCollection.aggregate([
+                        {
+                            '$match': {
+                                'type': "comercio",
+                                'make': {'$in': [order.brand]}
+                              }
+                        }, {
+                            '$lookup': {
+                                'from': 'User',
+                                'localField': 'createBy',
+                                'foreignField': 'email',
+                                'as': 'user'
+                            }
+                        }, {
+                            '$addFields': {
+                                'user': { '$first': "$user" }, 
+                            }
+                        }
+                    ]).get();
+                    const products: Product[] = await this.productRepository.find({where: { idOrder: new ObjectId(id)}});
+                    if (commerceResult && commerceResult.length > 0 && products && products.length > 0) {
+                        for (let commerce of commerceResult) {
+                            var link: string = process.env.FRONTEND_URL+"/admin/orders/offers";
+                            for (let product of products) {
+                                await this.createNotifications('Web', {email: commerce.createBy, rut: commerce.rut, phone: commerce.phone}, { email: '', rut: '', phone: ''}, 'Producto publicado', commerce.name+': Alguien necesita un '+product.title+' en Planeta Tuercas que podrías vender! Haz tu oferta Ya! en tu Mesón Virtual', link, 0, false);
+                            }
+                            await this.createNotifications('SMS', {email: commerce.createBy, rut: commerce.rut, phone: commerce.phone}, { email: '', rut: '', phone: ''}, 'Pedido publicado', commerce.name+': Alguien necesita un producto en Planeta Tuercas que podrías vender! Haz tu oferta Ya! en tu Mesón Virtual', link, 0, false);
+                            //await this.createNotifications('Mail', {email: commerce.createBy, rut: commerce.rut, phone: commerce.phone}, { email: '', rut: '', phone: ''}, 'Pedido publicado', commerce.name+': Alguien necesita un producto en Planeta Tuercas que podrías vender! Haz tu oferta Ya! en tu Mesón Virtual', link, 0, false);
+                        }
+                    }
+                }
             }
         } catch (error) {
             console.log(error);
@@ -171,6 +205,40 @@ import { OrderCompany } from '../interface/order-company.interface';
         return orders[0];
     
     }
+    /**
+   * Creación de una notificación estandar
+   * @param channel canal de la notificación (SMS, Web, Mail, etc)
+   * @param recipent datos de usuario destino
+   * @param sender datos de usuario origen
+   * @param title titulo de notificación
+   * @param message mensaje de notificación
+   * @param link puede tener un link para mayor acceso
+   * @param pushAttempts contador de veces que fue envíado
+   * @param send si el usuario le llego la notificación o no
+   */
+  private async createNotifications(channel: string, recipent: {email: string, rut: string, phone: string}, sender: {email: string, rut: string, phone: string}, title: string, message: string, link: string, pushAttempts: number, send: boolean) {
+    var notification = new Notification();
+    notification.channel = channel
+    notification.recipient = {
+      email: recipent.email,
+      rut: recipent.rut,
+      phone: recipent.phone
+    }
+    notification.sender = {
+      email: sender.email,
+      rut: sender.rut,
+      phone: sender.phone
+    }
+    notification.title = title;
+    notification.message = message;
+    notification.link = link;
+    notification.viewed = false;
+    notification.viewedDate = new Date(0);
+    notification.status = 0;
+    notification.pushAttempts = pushAttempts;
+    notification.send = send;
+    await this.notificationRepository.create(notification);
   }
+}
   
   
