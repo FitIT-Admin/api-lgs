@@ -179,6 +179,8 @@ import { User } from '../models';
       companyTemp.name = company.name;
       companyTemp.type = company.type;
       companyTemp.direction = company.direction;
+      companyTemp.region = company.region;
+      companyTemp.commune = company.commune;
       companyTemp.phone = company.phone;
       companyTemp.accountNumber = company.accountNumber;
       companyTemp.accountType = company.accountType;

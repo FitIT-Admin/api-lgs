@@ -44,6 +44,18 @@ export class Company extends TimestampEntity {
     type: 'string',
     required: true,
   })
+  region: string;
+
+  @property({
+    type: 'string',
+    required: true,
+  })
+  commune: string;
+
+  @property({
+    type: 'string',
+    required: true,
+  })
   phone: string;
 
   @property({
