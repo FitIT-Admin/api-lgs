@@ -144,7 +144,13 @@ export class ProductController {
         try {
           let data: OrderWithProductOffer[] = []
           let brands: string[] = brand.split(',');
-          const orders: Order[] = await this.orderRepository.find({ where: { status: {inq: [1,2]}, brand: { $in: brands}}, order: ['createdAt DESC']});
+          var query: {} = {};
+          if (brand === 'all') {
+            query = { where: { status: {inq: [1,2]}}, order: ['createdAt DESC'] };
+          } else {
+            query = { where: { status: {inq: [1,2]}, brand: { $in: brands}}, order: ['createdAt DESC'] };
+          }
+          const orders: Order[] = await this.orderRepository.find(query);
           for (let order of orders) {
             const products: Product[] = await this.productRepository.find({ where: { status: { inq: [1,2]}, idOrder: new ObjectId(order.id)}, order: ['createdAt DESC']});
             if (products && products.length > 0) {
