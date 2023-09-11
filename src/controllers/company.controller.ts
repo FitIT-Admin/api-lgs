@@ -21,7 +21,7 @@ import {
 import {authenticate} from '@loopback/authentication';
 import { CompanyRepository, OfferRepository, OrderRepository, UserRepository } from '../repositories';
 import { Company } from '../models/company.model';
-import { User } from '../models';
+import { Offer, User } from '../models';
   export class CompanyController {
     
     constructor(
@@ -77,7 +77,7 @@ import { User } from '../models';
         @param.path.string('email') email: string
     ): Promise<number> {
       try {
-        const companies: {count: number} = await this.companyRepository.count({createBy: email});
+        const companies: {count: number} = await this.companyRepository.count({createBy: email, status: {$ne: -1}});
         return (companies) ? companies.count : 0;
       } catch(error) {
         console.log(error);
@@ -98,7 +98,7 @@ import { User } from '../models';
         @param.path.string('email') email: string
     ): Promise<Company[]> {
       try {
-        const companies: Company[] = await this.companyRepository.find({where: {createBy: email}});
+        const companies: Company[] = await this.companyRepository.find({where: {createBy: email, status: {$ne: -1}}});
         return (companies && companies.length > 0) ? companies : [];
       } catch(error) {
         console.log(error);
@@ -175,19 +175,39 @@ import { User } from '../models';
       @requestBody() company: Company,
     ): Promise<void> {
       const companyTemp: Company = await this.companyRepository.findById(id);
-      companyTemp.rut = company.rut;
-      companyTemp.name = company.name;
-      companyTemp.type = company.type;
-      companyTemp.direction = company.direction;
-      companyTemp.region = company.region;
-      companyTemp.commune = company.commune;
-      companyTemp.phone = company.phone;
-      companyTemp.accountNumber = company.accountNumber;
-      companyTemp.accountType = company.accountType;
-      companyTemp.bank = company.bank;
-      companyTemp.make = company.make;
-      await this.companyRepository.updateById(companyTemp.id, companyTemp);
-      console.log("Update Company: "+companyTemp.rut+", "+companyTemp.name);
+      if (companyTemp.rut === company.rut) {
+        companyTemp.name = company.name;
+        companyTemp.type = company.type;
+        companyTemp.direction = company.direction;
+        companyTemp.region = company.region;
+        companyTemp.commune = company.commune;
+        companyTemp.phone = company.phone;
+        companyTemp.accountNumber = company.accountNumber;
+        companyTemp.accountType = company.accountType;
+        companyTemp.bank = company.bank;
+        companyTemp.make = company.make;
+        await this.companyRepository.updateById(companyTemp.id, companyTemp);
+        console.log("Update Company: "+companyTemp.rut+", "+companyTemp.name);
+      } else {
+        const searchCompany: Company[] = await this.companyRepository.find({ where: { rut: company.rut} });
+        if (searchCompany && searchCompany.length > 0) {
+          throw new HttpErrors.ExpectationFailed('rut repetido');
+        } else {
+          companyTemp.rut = company.rut;
+          companyTemp.name = company.name;
+          companyTemp.type = company.type;
+          companyTemp.direction = company.direction;
+          companyTemp.region = company.region;
+          companyTemp.commune = company.commune;
+          companyTemp.phone = company.phone;
+          companyTemp.accountNumber = company.accountNumber;
+          companyTemp.accountType = company.accountType;
+          companyTemp.bank = company.bank;
+          companyTemp.make = company.make;
+          await this.companyRepository.updateById(companyTemp.id, companyTemp);
+          console.log("Update Company: "+companyTemp.rut+", "+companyTemp.name);
+        }
+      }
     }
     @put('/companies/delete/{id}', {
       responses: {
@@ -201,9 +221,14 @@ import { User } from '../models';
       @param.path.string('id') id: string,
     ): Promise<void> {
       const companyTemp: Company = await this.companyRepository.findById(id);
-      companyTemp.status = -1;
-      await this.companyRepository.updateById(companyTemp.id, companyTemp);
-      console.log("Delete Company: "+companyTemp.rut+", "+companyTemp.name);
+      const offers: Offer[] = await this.offerRepository.find({ where: { acceptedByCompany: companyTemp.rut, status: { inq: [3, 4] } }});
+      if (offers && offers.length > 0) {
+        throw new HttpErrors.ExpectationFailed('ofertas pendientes');
+      } else {
+        companyTemp.status = -1;
+        await this.companyRepository.updateById(companyTemp.id, companyTemp);
+        console.log("Delete Company: "+companyTemp.rut+", "+companyTemp.name);
+      }
     }
   }
   
