@@ -19,8 +19,8 @@ import {
     response,
   } from '@loopback/rest';
   import {authenticate} from '@loopback/authentication';
-import { CompanyRepository, NotificationRepository, OrderRepository, UserRepository } from '../repositories';
-import { Company, Notification, Order, User } from '../models';
+import { CompanyRepository, NotificationRepository, OfferRepository, OrderRepository, UserRepository } from '../repositories';
+import { Company, Notification, Offer, Order, User } from '../models';
 import { ObjectId } from 'mongodb';
 import { Product } from '../models/product.model';
 import { ProductRepository } from '../repositories/product.repository';
@@ -33,6 +33,7 @@ import { OrderCompany } from '../interface/order-company.interface';
         @repository(CompanyRepository) public companyRepository: CompanyRepository,
         @repository(UserRepository) public userRepository: UserRepository,
         @repository(OrderRepository) public orderRepository: OrderRepository,
+        @repository(OfferRepository) public offerRepository: OfferRepository,
         @repository(ProductRepository) public productRepository: ProductRepository,
     ) {}
       
@@ -57,7 +58,34 @@ import { OrderCompany } from '../interface/order-company.interface';
         //console.log(order);
         return await this.orderRepository.create(order);
     }
-    
+    @put('/order/update/{id}')
+    @response(204, {
+        description: 'Order PUT success',
+    })
+    @authenticate('jwt')
+    async updateById(
+        @param.path.string('id') id: string,
+        @requestBody() order: Order,
+    ): Promise<void> {
+        const orderTemp: Order = await this.orderRepository.findById(id);
+        const offers: Offer[] = await this.offerRepository.find({ where: { idOrder: new ObjectId(orderTemp.id), status: {$ne: -1} }});
+        if (orderTemp) {
+            if (offers && offers.length > 0) {
+                throw new HttpErrors.ExpectationFailed('order con ofertas');
+            } else {
+                orderTemp.brand = order.brand;
+                orderTemp.model = order.model;
+                orderTemp.year = order.year;
+                orderTemp.chassis = order.chassis;
+                orderTemp.photo = order.photo;
+                orderTemp.company = order.company;
+                await this.orderRepository.updateById(orderTemp.id, orderTemp);
+                console.log("Update Order: "+orderTemp.company+", "+orderTemp.createBy);
+            }
+        } else {
+            throw new HttpErrors.ExpectationFailed('order no existe');
+        }
+    }
     @put('/order/{id}')
     @response(204, {
         description: 'Order PUT success',
@@ -179,15 +207,27 @@ import { OrderCompany } from '../interface/order-company.interface';
     async deleteById(
         @param.path.string('id') id: string
     ): Promise<boolean> {
-        const order: Order = await this.orderRepository.findById(id);
-        order.status = -1;
-        await this.orderRepository.replaceById(order.id, order);
-        const products: Product[] = await this.productRepository.find({ where: {idOrder: new ObjectId(order.id), status: {$ne: -1}}});
-        for (let product of products) {
-            product.status = -1;
-            await this.productRepository.updateById(product.id, product);
+        const orderTemp: Order = await this.orderRepository.findById(id);
+        const products: Product[] = await this.productRepository.find({ where: {idOrder: new ObjectId(orderTemp.id), status: {$ne: -1}}});
+        let productsAccepted: Product[] = await products.filter(elemento => [2, 3, 4, 5, 6, 7].includes(elemento.status));
+        if (productsAccepted && productsAccepted.length > 0) {
+            throw new HttpErrors.ExpectationFailed('products con ofertas');
+        } else {
+            let productsNotAccepted: Product[] = await products.filter(elemento => [0, 1].includes(elemento.status));
+            if (productsNotAccepted && productsNotAccepted.length > 0) {
+                for (let product of productsNotAccepted) {
+                    product.status = -1;
+                    await this.productRepository.updateById(product.id, product);
+                }
+                orderTemp.status = -1;
+                await this.orderRepository.updateById(orderTemp.id, orderTemp);
+                return true;
+            } else {
+                orderTemp.status = -1;
+                await this.orderRepository.updateById(orderTemp.id, orderTemp);
+                return true;
+            }
         }
-        return true;
     }
     
     @get('/order/byidorder/{idOrder}')

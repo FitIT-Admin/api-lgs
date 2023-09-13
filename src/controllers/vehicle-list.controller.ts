@@ -185,6 +185,41 @@ import { VehicleListRepository } from '../repositories';
           throw new HttpErrors.ExpectationFailed('Error al buscar por id');
       }
     }
+    @get('/vehicle-list/year', {
+      responses: {
+        '200': {
+          description: 'VehicleList model instance',
+        },
+      },
+    })
+    @authenticate('jwt')
+    async findAllYear(): Promise<{year: string}[]> {
+      try {
+          const vehicleListCollection = (this.vehicleListRepository.dataSource.connector as any).collection("VehicleList");
+          if (vehicleListCollection) {
+            const vehicle: {year: string}[] = await vehicleListCollection.aggregate([
+              {
+                $group: {
+                  _id: "$year"
+                }
+              },
+              {
+                $project: {
+                  _id: 0,
+                  year: "$_id"
+                }
+              }
+            ]).get();
+            //console.log(vehicle.length);
+            return (vehicle && vehicle.length > 0) ? vehicle : [];
+          } else {
+            return [];
+          }
+      } catch(error) {
+          console.log(error);
+          throw new HttpErrors.ExpectationFailed('Error al buscar por id');
+      }
+    }
   
   }
   

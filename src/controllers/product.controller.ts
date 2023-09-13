@@ -266,15 +266,55 @@ export class ProductController {
   async replaceById(
     @param.path.string('id') id: string,
     @requestBody() product: Product,): Promise<void> {
-        try {
-            await this.productRepository.replaceById(id, product);
-        } catch(error) {
-            console.log(error);
-            throw new HttpErrors.ExpectationFailed('Error al buscar por id');
+        const productTemp: Product = await this.productRepository.findById(id);
+        if (productTemp) {
+          const offers: Offer[] = await this.offerRepository.find({ where: { idProduct: new ObjectId(productTemp.id), status: {inq: [2,3,4,5,6,7]} }});
+          if (offers && offers.length > 0) {
+            throw new HttpErrors.ExpectationFailed('product con ofertas');
+          } else {
+            productTemp.title = product.title;
+            productTemp.qty = product.qty;
+            productTemp.originalQty = product.originalQty;
+            await this.productRepository.updateById(productTemp.id, productTemp);
+            console.log("Update Product: "+productTemp.company+", "+productTemp.createBy);
+          }
+        } else {
+          throw new HttpErrors.ExpectationFailed('Error al buscar por id');
         }
     }
+    @put('/product/delete/{id}', {
+      responses: {
+        '204': {
+          description: 'Products PUT success'
+        },
+      },
+    })
+    @authenticate('jwt')
+    async deleteById(
+      @param.path.string('id') id: string): Promise<void> {
+          const productTemp: Product = await this.productRepository.findById(id);
+          if (productTemp) {
+            const offers: Offer[] = await this.offerRepository.find({ where: { idProduct: new ObjectId(productTemp.id), status: {$ne: -1} }});
+            let offersAccepted: Offer[] = await offers.filter(elemento => [3, 4, 5, 6, 7].includes(elemento.status));
+            if (offersAccepted && offersAccepted.length > 0) {
+              throw new HttpErrors.ExpectationFailed('product con ofertas');
+            } else {
+              let offersNotAccepted: Offer[] = await offers.filter(elemento => [2].includes(elemento.status));
+              for (let offer of offersNotAccepted) {
+                offer.status = -1;
+                await this.offerRepository.updateById(offer.id, offer);
+                console.log("Delete Offer: "+offer.company+", "+offer.createBy);
+              }
+              productTemp.status = -1;
+              await this.productRepository.updateById(productTemp.id, productTemp);
+              console.log("Delete Product: "+productTemp.company+", "+productTemp.createBy);
+            }
+          } else {
+            throw new HttpErrors.ExpectationFailed('Error al buscar por id');
+          }
+      }
 
-  @del('/product/{id}', {
+  /*@del('/product/{id}', {
     responses: {
       '204': {
         description: 'Products DELETE success',
@@ -295,7 +335,7 @@ export class ProductController {
             console.log(error);
             throw new HttpErrors.ExpectationFailed('Error al buscar por id');
         }
-    }
+    }*/
     
  @del('/offer/{id}', {
     responses: {
