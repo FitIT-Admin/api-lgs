@@ -19,16 +19,6 @@ import {
     response,
   } from '@loopback/rest';
   import {authenticate} from '@loopback/authentication';
-  //import {ProductRepository, UserRepository} from '../repositories';
-  //import {Product} from '../models';
-  import { ProductRepository } from '../repositories/product.repository';
-  import { OfferRepository } from '../repositories/offer.repository';
-  import { OrderRepository } from '../repositories/order.repository';
-  import { Product } from '../models/product.model';
-  import { ObjectId } from 'mongodb';
-  import { OfferWithData } from '../interface/offer-with-data.interface';
-  import { OrderWithProductOffer } from '../interface/order-with-product-offer.interface';
-  import { Offer, Order, VehicleList } from '../models';
 import { VehicleListRepository } from '../repositories';
   //import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
   //import {inject} from '@loopback/core';
@@ -45,7 +35,7 @@ import { VehicleListRepository } from '../repositories';
           },
         },
       })
-    //@authenticate('jwt')
+    @authenticate('jwt')
     async findAllMake(): Promise<{make: string}[]> {
         try {
             const vehicleListCollection = (this.vehicleListRepository.dataSource.connector as any).collection("VehicleList");
@@ -80,7 +70,7 @@ import { VehicleListRepository } from '../repositories';
         },
       },
     })
-    //@authenticate('jwt')
+    @authenticate('jwt')
     async findModelByMake(@param.path.string('make') make: string): Promise<{model: string}[]> {
       try {
           const vehicleListCollection = (this.vehicleListRepository.dataSource.connector as any).collection("VehicleList");
@@ -121,7 +111,7 @@ import { VehicleListRepository } from '../repositories';
         },
       },
     })
-    //@authenticate('jwt')
+    @authenticate('jwt')
     async findYearByMakeModel(
       @param.path.string('make') make: string,
       @param.path.string('model') model: string
@@ -167,7 +157,7 @@ import { VehicleListRepository } from '../repositories';
         },
       },
     })
-    //@authenticate('jwt')
+    @authenticate('jwt')
     async findAllModel(): Promise<{model: string}[]> {
       try {
           const vehicleListCollection = (this.vehicleListRepository.dataSource.connector as any).collection("VehicleList");
@@ -182,6 +172,41 @@ import { VehicleListRepository } from '../repositories';
                 $project: {
                   _id: 0,
                   model: "$_id"
+                }
+              }
+            ]).get();
+            //console.log(vehicle.length);
+            return (vehicle && vehicle.length > 0) ? vehicle : [];
+          } else {
+            return [];
+          }
+      } catch(error) {
+          console.log(error);
+          throw new HttpErrors.ExpectationFailed('Error al buscar por id');
+      }
+    }
+    @get('/vehicle-list/year', {
+      responses: {
+        '200': {
+          description: 'VehicleList model instance',
+        },
+      },
+    })
+    @authenticate('jwt')
+    async findAllYear(): Promise<{year: string}[]> {
+      try {
+          const vehicleListCollection = (this.vehicleListRepository.dataSource.connector as any).collection("VehicleList");
+          if (vehicleListCollection) {
+            const vehicle: {year: string}[] = await vehicleListCollection.aggregate([
+              {
+                $group: {
+                  _id: "$year"
+                }
+              },
+              {
+                $project: {
+                  _id: 0,
+                  year: "$_id"
                 }
               }
             ]).get();
