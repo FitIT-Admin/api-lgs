@@ -411,6 +411,110 @@ import { ObjectId } from 'mongodb';
         throw new HttpErrors.ExpectationFailed('Error al buscar contador');
       }
     }
+    @get('/offer/byemail/{email}/skip/{skip}/limit/{limit}')
+    @response(200, {
+        description: 'Offer model instance',
+        content: {
+        'application/json': {
+            schema: getModelSchemaRef(Offer, {includeRelations: true}),
+            },
+        },
+    })
+    @authenticate('jwt')
+    async findByEmail(
+        @param.path.string('email') email: string,
+        @param.path.number('skip') skip: number,
+        @param.path.number('limit') limit: number
+    ): Promise<any> {
+      let offerResult: any;
+      const offerCollection = (this.offerRepository.dataSource.connector as any).collection("Offer");
+      if (offerCollection) {
+        offerResult = await offerCollection.aggregate([
+          {
+            '$match': {
+              'status': {$in: [ 1, 2, 3, 4 ]},
+              'createBy' : email
+            }
+          }, {
+            '$lookup': {
+              'from': 'Product',
+              'localField': 'idProduct',
+              'foreignField': '_id',
+              'as': 'product'
+            }
+          }, {
+            '$lookup': {
+              'from': 'Order',
+              'localField': 'idOrder',
+              'foreignField': '_id',
+              'as': 'order'
+            }
+          }, {
+            '$addFields': {
+              'product': { '$first': "$product" }, 'order': { '$first': "$order" },"id":"$_id"
+            }
+          }, 
+          {
+            '$sort': { _id: -1 }
+          },
+          {
+            '$skip': skip
+          },
+          {
+            '$limit': limit
+          }
+        ]).get();
+      }
+      return (offerResult.length > 0) ? offerResult : [];
+    }
+    @get('/offer/count/byemail/{email}')
+    @response(200, {
+        description: 'Offer model instance',
+        content: {
+        'application/json': {
+            schema: getModelSchemaRef(Offer, {includeRelations: true}),
+            },
+        },
+    })
+    @authenticate('jwt')
+    async countByEmail(
+        @param.path.string('email') email: string
+    ): Promise<{count: number}> {
+      let offerResult: any;
+      const offerCollection = (this.offerRepository.dataSource.connector as any).collection("Offer");
+      if (offerCollection) {
+        offerResult = await offerCollection.aggregate([
+          {
+            '$match': {
+              'status': {$in: [ 1, 2, 3, 4 ]},
+              'createBy' : email
+            }
+          }, {
+            '$lookup': {
+              'from': 'Product',
+              'localField': 'idProduct',
+              'foreignField': '_id',
+              'as': 'product'
+            }
+          }, {
+            '$lookup': {
+              'from': 'Order',
+              'localField': 'idOrder',
+              'foreignField': '_id',
+              'as': 'order'
+            }
+          }, {
+            '$addFields': {
+              'product': { '$first': "$product" }, 'order': { '$first': "$order" },"id":"$_id"
+            }
+          }, 
+            {
+            '$sort': { _id: 1 }
+          }
+        ]).get();
+      }
+      return (offerResult && offerResult.length > 0) ? { count: offerResult.length } : { count: 0 };
+    }
     @get('/offer/byid/{id}')
     @response(200, {
         description: 'Offer model instance',
