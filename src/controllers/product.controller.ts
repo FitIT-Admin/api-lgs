@@ -291,24 +291,35 @@ export class ProductController {
     })
     @authenticate('jwt')
     async deleteById(
-      @param.path.string('id') id: string): Promise<void> {
+      @param.path.string('id') id: string): Promise<boolean> {
           const productTemp: Product = await this.productRepository.findById(id);
           if (productTemp) {
             const offers: Offer[] = await this.offerRepository.find({ where: { idProduct: new ObjectId(productTemp.id), status: {$ne: -1} }});
+            // Caso cuando ofertas se puedan rechazar por taller
             let offersAccepted: Offer[] = await offers.filter(elemento => [3, 4, 5, 6, 7].includes(elemento.status));
             if (offersAccepted && offersAccepted.length > 0) {
               throw new HttpErrors.ExpectationFailed('product con ofertas');
             } else {
               let offersNotAccepted: Offer[] = await offers.filter(elemento => [2].includes(elemento.status));
               for (let offer of offersNotAccepted) {
-                offer.status = -1;
+                offer.status = -2;
                 await this.offerRepository.updateById(offer.id, offer);
-                console.log("Delete Offer: "+offer.company+", "+offer.createBy);
+                console.log("Cancel Offer: "+offer.company+", "+offer.createBy);
               }
               productTemp.status = -1;
               await this.productRepository.updateById(productTemp.id, productTemp);
               console.log("Delete Product: "+productTemp.company+", "+productTemp.createBy);
+              return true;
             }
+            // Caso que no existe metodo rechazar por taller
+            /*if (offers && offers.length > 0) {
+              throw new HttpErrors.ExpectationFailed('product con ofertas');
+            } else {
+              productTemp.status = -1;
+              await this.productRepository.updateById(productTemp.id, productTemp);
+              console.log("Delete Product: "+productTemp.company+", "+productTemp.createBy);
+              return true;
+            }*/
           } else {
             throw new HttpErrors.ExpectationFailed('Error al buscar por id');
           }
