@@ -432,7 +432,7 @@ import { ObjectId } from 'mongodb';
         offerResult = await offerCollection.aggregate([
           {
             '$match': {
-              'status': {$in: [ 1, 2, 3, 4 ]},
+              'status': {$in: [ -2, 1, 2, 3, 4 ]},
               'createBy' : email
             }
           }, {
@@ -535,6 +535,33 @@ import { ObjectId } from 'mongodb';
 
         return {"offer":offer,"product":product,"order":order};
     
+    }
+    @put('/offer/update/{id}', {
+      responses: {
+        '204': {
+          description: 'Offer PUT success'
+        },
+      },
+    })
+    @authenticate('jwt')
+    async updateById(
+      @param.path.string('id') id: string,
+      @requestBody() offer: Offer,): Promise<void> {
+          const offerTemp: Offer = await this.offerRepository.findById(id);
+          if (offerTemp) {
+            offerTemp.estado = offer.estado;
+            offerTemp.qty = offer.qty;
+            offerTemp.qtyOfferAccepted = offer.qtyOfferAccepted;
+            offerTemp.origen = offer.origen;
+            offerTemp.price = offer.price;
+            offerTemp.make = offer.make;
+            offerTemp.company = offer.company;
+            offerTemp.despacho = offer.despacho;
+            await this.offerRepository.updateById(offerTemp.id, offerTemp);
+            console.log("Update Offer: "+offerTemp.company+", "+offerTemp.createBy);
+          } else {
+            throw new HttpErrors.ExpectationFailed('Error al buscar por id');
+          }
     }
     /**
    * Creación de una notificación estandar
