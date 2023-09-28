@@ -215,7 +215,16 @@ import { OrderCompany } from '../interface/order-company.interface';
         } else {
             let productsNotAccepted: Product[] = await products.filter(elemento => [0, 1].includes(elemento.status));
             if (productsNotAccepted && productsNotAccepted.length > 0) {
+                const offers: Offer[] = await this.offerRepository.find({ where: {idOrder: new ObjectId(orderTemp.id), status: 2}});
+                if (offers && offers.length > 0) {
+                    for (let offer of offers) {
+                        // Cancelar Ofertas
+                        offer.status = -2
+                        await this.offerRepository.updateById(offer.id, offer);
+                    }
+                }
                 for (let product of productsNotAccepted) {
+                    // Eliminando productos
                     product.status = -1;
                     await this.productRepository.updateById(product.id, product);
                 }
