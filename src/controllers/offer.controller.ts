@@ -22,6 +22,7 @@ import {
 import { OfferRepository, OrderRepository, UserRepository , ProductRepository, CompanyRepository, NotificationRepository} from '../repositories';
 import { Offer, Order, User, Product, Notification, Company } from '../models';
 import { ObjectId } from 'mongodb';
+require('dotenv').config();
   export class OfferController {
     
     constructor(
@@ -51,8 +52,11 @@ import { ObjectId } from 'mongodb';
     })
     offer: Omit<Offer, 'id'>,
     ): Promise<Offer> {
+        let timerVigency: number = (process.env.TIMER_VIGENCY) ? Number(process.env.TIMER_VIGENCY) : 30;
         offer.confirmedAtAdmin = null;
         offer.confirmedAtClaimant = null;
+        offer.timerVigency = new Date(new Date().getTime() + timerVigency * 60000);
+        offer.timerPaymentWorkshop = null;
         const product: Product = await this.productRepository.findById(offer.idProduct);
         if (product) {
           const workshop: Company[] = await this.companyRepository.find({ where: { rut: product.company }});
@@ -200,10 +204,31 @@ import { ObjectId } from 'mongodb';
     @authenticate('jwt')
     async findByIdProductAndStatus(
         @param.path.string('id') id: string,
-        @param.path.number('status') status: string
+        @param.path.number('status') status: number
     ): Promise<Offer[]> {
-        const offer: Offer[] = await this.offerRepository.find({where: {idProduct: new ObjectId(id), status: status}, limit: 5});
-        return offer;
+        const offersTemp: Offer[] = await this.offerRepository.find({where: {idProduct: new ObjectId(id), status: status}});
+        for (let offer of offersTemp) {
+          if ((new Date((offer.timerVigency) ? offer.timerVigency : new Date()).getTime() - new Date().getTime()) <= 0) {
+            if (status === 2) {
+              offer.status = -3;
+              await this.offerRepository.updateById(offer.id, offer);
+              console.log("Expire Offer: "+offer.company+", "+offer.createBy);
+            }
+          }
+        }
+        let offers: Offer[] = []
+        let count = 0;
+        for (let offer of offersTemp) {
+          if (count < 5) {
+            if (offer.status == 2) {
+              offers.push(offer);
+              count++;
+            }
+          } else {
+            break;
+          }
+        }
+        return (offers && offers.length > 0) ? offers : [];
     }
     @put('/offer/all/{ids}/{qty}')
     @response(204, {
@@ -432,7 +457,7 @@ import { ObjectId } from 'mongodb';
         offerResult = await offerCollection.aggregate([
           {
             '$match': {
-              'status': {$in: [ -2, 1, 2, 3, 4 ]},
+              'status': {$in: [ -3, -2, 1, 2, 3, 4 ]},
               'createBy' : email
             }
           }, {
@@ -480,40 +505,17 @@ import { ObjectId } from 'mongodb';
     async countByEmail(
         @param.path.string('email') email: string
     ): Promise<{count: number}> {
-      let offerResult: any;
-      const offerCollection = (this.offerRepository.dataSource.connector as any).collection("Offer");
-      if (offerCollection) {
-        offerResult = await offerCollection.aggregate([
-          {
-            '$match': {
-              'status': {$in: [ 1, 2, 3, 4 ]},
-              'createBy' : email
-            }
-          }, {
-            '$lookup': {
-              'from': 'Product',
-              'localField': 'idProduct',
-              'foreignField': '_id',
-              'as': 'product'
-            }
-          }, {
-            '$lookup': {
-              'from': 'Order',
-              'localField': 'idOrder',
-              'foreignField': '_id',
-              'as': 'order'
-            }
-          }, {
-            '$addFields': {
-              'product': { '$first': "$product" }, 'order': { '$first': "$order" },"id":"$_id"
-            }
-          }, 
-            {
-            '$sort': { _id: 1 }
+      var offers: Offer[] = await this.offerRepository.find({ where: { status: {inq: [-3, -2, 1, 2, 3, 4]}, createBy: email}});
+      for (let offer of offers) {
+        if ((new Date((offer.timerVigency) ? offer.timerVigency : new Date()).getTime() - new Date().getTime()) <= 0) {
+          if (offer.status === 2) {
+            offer.status = -3;
+            await this.offerRepository.updateById(offer.id, offer);
+            console.log("Expire Offer: "+offer.company+", "+offer.createBy);
           }
-        ]).get();
+        }
       }
-      return (offerResult && offerResult.length > 0) ? { count: offerResult.length } : { count: 0 };
+      return (offers && offers.length > 0) ? { count: offers.length } : { count: 0 };
     }
     @get('/offer/byid/{id}')
     @response(200, {

@@ -137,6 +137,16 @@ export class Offer extends TimestampEntity {
   confirmedAtClaimant?: Date | null;
 
   @property({
+    type: 'date',
+  })
+  timerVigency?: Date | null;
+
+  @property({
+    type: 'date',
+  })
+  timerPaymentWorkshop?: Date | null;
+
+  @property({
     type: 'string',
   })
   acceptedByUser?: string;
