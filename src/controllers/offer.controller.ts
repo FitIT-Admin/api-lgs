@@ -263,6 +263,9 @@ require('dotenv').config();
                   if (product) {
                     offersConfirm[i].acceptedByUser = product.createBy;
                     offersConfirm[i].acceptedByCompany = product.company;
+                    // Sys-Taller-Timer-Pago pendiente
+                    let timerPaymentWorkshop: number = (process.env.TIMER_PAYMENT_TALLER) ? Number(process.env.TIMER_PAYMENT_TALLER) : 10;
+                    offersConfirm[i].timerPaymentWorkshop = new Date(new Date().getTime() + timerPaymentWorkshop * 60000);
                   }
                   await this.offerRepository.updateById(offersConfirm[i].id, offersConfirm[i]);
                   const commerce: Company[] = await this.companyRepository.find({ where: { rut: offersConfirm[i].company }});
@@ -457,7 +460,7 @@ require('dotenv').config();
         offerResult = await offerCollection.aggregate([
           {
             '$match': {
-              'status': {$in: [ -3, -2, 1, 2, 3, 4 ]},
+              'status': {$in: [ -4, -3, -2, 1, 2, 3, 4 ]},
               'createBy' : email
             }
           }, {
@@ -505,7 +508,7 @@ require('dotenv').config();
     async countByEmail(
         @param.path.string('email') email: string
     ): Promise<{count: number}> {
-      var offers: Offer[] = await this.offerRepository.find({ where: { status: {inq: [-3, -2, 1, 2, 3, 4]}, createBy: email}});
+      var offers: Offer[] = await this.offerRepository.find({ where: { status: {inq: [-4, -3, -2, 1, 2, 3, 4]}, createBy: email}});
       for (let offer of offers) {
         if ((new Date((offer.timerVigency) ? offer.timerVigency : new Date()).getTime() - new Date().getTime()) <= 0) {
           if (offer.status === 2) {

@@ -56,11 +56,10 @@ import { OfferWithData } from '../interface/offer-with-data.interface';
       @authenticate('jwt')
       async findOffersInCart(
         @param.path.string('email') email: string
-      ): Promise<{ order: Order, productWithOffers: {product: Product, offers: Offer[]}[]}[]> {
+        ): Promise<{ order: Order, productWithOffers: {product: Product, offers: Offer[]}[]}[]> {
             try {
                 const orders: Order[] = await this.orderRepository.find({where: {status: {inq: [1, 2]}, createBy: email}});
                 let orderOffers: { order: Order, productWithOffers: {product: Product, offers: Offer[]}[]}[] = [];
-                let count: number = 0;
                 if (orders && orders.length > 0) {
                   for (let order of orders) {
                     const products: Product[] = await this.productRepository.find({ where: { status: { inq: [2, 3] }, idOrder: new ObjectId(order.id) } });
@@ -70,21 +69,55 @@ import { OfferWithData } from '../interface/offer-with-data.interface';
                         productWithOffers: []
                       });
                       for (let product of products) {
-                        const offers: Offer[] = await this.offerRepository.find({ where: {status: 3, idProduct: new ObjectId(product.id)} });
+                        const offersTemp: Offer[] = await this.offerRepository.find({ where: {status: 3, idProduct: new ObjectId(product.id)} });
+                        let countOffersMax: number = offersTemp.length;
+                        let countQtyOfferMax: number = product.originalQty;
+                        for (let offer of offersTemp) {
+                          // Sys-Taller-Timer-Pago Pendiente
+                          if ((new Date((offer.timerPaymentWorkshop) ? offer.timerPaymentWorkshop : new Date()).getTime() - new Date().getTime()) <= 0) {
+                            countQtyOfferMax = countQtyOfferMax - offer.qtyOfferAccepted;
+                            countOffersMax--;
+                            offer.status = -4;
+                            await this.offerRepository.updateById(offer.id, offer);
+                            console.log("Expire Offer: "+offer.company+", "+offer.createBy);
+                          }
+                        }
+                        if (countOffersMax === 0) {
+                          product.qty = product.originalQty;
+                          product.status = 1;
+                          await this.productRepository.updateById(product.id, product);
+                        } else if (countOffersMax > 0 && countOffersMax < offersTemp.length) {
+                          product.qty = countQtyOfferMax;
+                          product.status = 2;
+                          await this.productRepository.updateById(product.id, product);
+                        }
+                        let offers: Offer[] = [];
+                        for (let offer of offersTemp) {
+                          if (offer.status == 3) {
+                            offers.push(offer);
+                          }
+                        }
                         if (offers && offers.length > 0) {
-                          orderOffers[count].productWithOffers.push({
-                            product: product,
-                            offers: offers
-                          });
+                          if (orderOffers.length > 0) {
+                            orderOffers[orderOffers.length -1].productWithOffers.push({
+                              product: product,
+                              offers: offers
+                            });
+                          }
+                        } else {
+                          if (orderOffers.length > 0 && orderOffers[orderOffers.length -1].productWithOffers.length <= 0) {
+                            console.log("eliminar orderOffers");
+                            orderOffers.splice(orderOffers.length -1, 1);
+                          }
                         }
                       }
-                      count++;
                     }
                     
                   }
                   return (orderOffers && orderOffers.length > 0) ? orderOffers : []
                 }
                 return (orderOffers && orderOffers.length > 0) ? orderOffers : [];
+
             } catch(error) {
                 console.log(error);
                 throw new HttpErrors.ExpectationFailed('Error al buscar por id');
