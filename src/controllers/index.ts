@@ -25,3 +25,4 @@ export * from './offer.controller';
 export * from './vehicle-list.controller';
 export * from './notification.controller';
 export * from './location.controller';
+export * from './delivery.controller';
