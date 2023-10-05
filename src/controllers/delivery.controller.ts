@@ -31,7 +31,7 @@ import { OfferWithData } from '../interface/offer-with-data.interface';
   //import {inject} from '@loopback/core';
   
   
-  export class SalesManagementController {
+  export class DeliveryController {
     constructor(
       @repository(NotificationRepository) public notificationRepository : NotificationRepository,
       @repository(UserRepository) public userRepository: UserRepository,
@@ -40,7 +40,7 @@ import { OfferWithData } from '../interface/offer-with-data.interface';
       @repository(OrderRepository) public orderRepository: OrderRepository,
       @repository(OfferRepository) public offerRepository: OfferRepository,
     ) {}
-    @get('/sales-management/orders', {
+    @get('/delivery/orders', {
     responses: {
         '200': {
         description: 'Offer model instance',
@@ -62,7 +62,7 @@ import { OfferWithData } from '../interface/offer-with-data.interface';
               offerResult = await offerCollection.aggregate([
                   {
                     '$match': {
-                      'status': {'$in': [4, 5]},
+                      'status': {'$in': [6, 7, 8]},
                     }
                   }, {
                     '$lookup': {
@@ -113,7 +113,7 @@ import { OfferWithData } from '../interface/offer-with-data.interface';
             throw new HttpErrors.ExpectationFailed('Error al buscar por id');
         }
     }
-    @put('/sales-management/order/{order_id}/product/{product_id}/offer/{offer_id}', {
+    @put('/delivery/order/{order_id}/product/{product_id}/offer/{offer_id}', {
         responses: {
           '200': {
             description: 'Products model instance',
@@ -134,26 +134,26 @@ import { OfferWithData } from '../interface/offer-with-data.interface';
       ): Promise<void> {
             try {
               const offer: Offer = await this.offerRepository.findById(offer_id);
-              if (offer) {
-                // Offer = Pagado (4) => Confirmar Pago (5)
-                offer.status = 5;
+              if (offer && offer.status == 6) {
+                // Offer = Pago confirmado-comercio (6) => Entregado-taller (7)
+                offer.status = 7;
                 if (photoPath.photo !== '') {
                   offer.photoPaymentReceiptAtAdmin = photoPath.photo;
                 }
                 offer.confirmedAtAdmin = new Date();
                 await this.offerRepository.updateById(offer.id, offer);
-                const offerProduct: Offer[] = await this.offerRepository.find({ where: { idProduct: new ObjectId(product_id), status: 4} });
-                const commerce: Company[] = await this.companyRepository.find({ where: { rut: offer.company}});
+                const offerProduct: Offer[] = await this.offerRepository.find({ where: { idProduct: new ObjectId(product_id), status: 6} });
+                const workshop: Company[] = await this.companyRepository.find({ where: { rut: offer.company}});
                 const product: Product = await this.productRepository.findById(product_id);
-                if (commerce && commerce.length > 0) {
+                if (workshop && workshop.length > 0) {
                   var link: string = process.env.FRONTEND_URL+"/admin/orders/sales";
-                  await this.createNotifications('Web', {email: commerce[0].createBy, rut: commerce[0].rut, phone: commerce[0].phone}, { email: '', rut: '', phone: ''}, 'Oferta pagada', commerce[0].name+': has recibido el pago de '+product.title+' en Planeta Tuercas. Ingresa y confirma!', link, 0, false);
-                  await this.createNotifications('SMS', {email: commerce[0].createBy, rut: commerce[0].rut, phone: commerce[0].phone}, { email: '', rut: '', phone: ''}, 'Oferta pagada', commerce[0].name+': has recibido el pago de '+product.title+' en Planeta Tuercas. Ingresa y confirma!', link, 0, false);
-                  await this.createNotifications('Mail', {email: commerce[0].createBy, rut: commerce[0].rut, phone: commerce[0].phone}, { email: '', rut: '', phone: ''}, 'Oferta pagada', commerce[0].name+': has recibido el pago de '+product.title+' en Planeta Tuercas. Ingresa y confirma!', link, 0, false);
+                  await this.createNotifications('Web', {email: workshop[0].createBy, rut: workshop[0].rut, phone: workshop[0].phone}, { email: '', rut: '', phone: ''}, 'Producto entregado', workshop[0].name+': has recibido el producto '+product.title+'? ingresa y confirma!', link, 0, false);
+                  await this.createNotifications('SMS', {email: workshop[0].createBy, rut: workshop[0].rut, phone: workshop[0].phone}, { email: '', rut: '', phone: ''}, 'Producto entregado', workshop[0].name+': has recibido el producto '+product.title+'? ingresa y confirma!', link, 0, false);
+                  await this.createNotifications('Mail', {email: workshop[0].createBy, rut: workshop[0].rut, phone: workshop[0].phone}, { email: '', rut: '', phone: ''}, 'Producto entregado', workshop[0].name+': has recibido el producto '+product.title+'? ingresa y confirma!', link, 0, false);
                 }
-                if (offerProduct && offerProduct.length == 0 && product && product.status == 4) {
-                  // Product = Pagado (4) => Confirmar Pago (5)
-                  product.status = 5;
+                if (offerProduct && offerProduct.length == 0 && product && product.status == 6) {
+                  // Product = Pago confirmado-comercio (6) => Entregado-taller (7)
+                  product.status = 7;
                   await this.productRepository.updateById(product.id, product);
                 }
               }
