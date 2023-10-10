@@ -146,7 +146,7 @@ import { OfferWithData } from '../interface/offer-with-data.interface';
                   offerResult = await offerCollection.aggregate([
                       {
                         '$match': {
-                          'status': { '$in': [4, 5, 6, 7]},
+                          'status': { '$in': [4, 5, 6, 7, 8]},
                           'acceptedByUser': email
                         }
                       }, {
@@ -291,16 +291,26 @@ import { OfferWithData } from '../interface/offer-with-data.interface';
         @param.path.string('id') id: string
       ): Promise<void> {
             try {
-              // Offer = Envíado (6) => Recibido (7)
+              // Offer = confirmado-producto-entregado-admin (7) => confirmado-producto-entregado-taller (8)
               const offer: Offer = await this.offerRepository.findById(id);
-              offer.status = 7;
+              offer.status = 8;
               await this.offerRepository.updateById(offer.id, offer);
-              const offerProduct: Offer[] = await this.offerRepository.find({ where: { idProduct: new ObjectId(offer.idProduct), status: 6} });
+              const offerProduct: Offer[] = await this.offerRepository.find({ where: { idProduct: new ObjectId(offer.idProduct), status: {inq: [3, 4, 5, 6, 7]} } });
               const product: Product = await this.productRepository.findById(offer.idProduct);
-              if (offerProduct && offerProduct.length == 0 && product && product.status == 6) {
-                // Product = Envíado (6) => Recibido (7)
-                product.status = 7;
-                await this.productRepository.updateById(product.id, product);
+              if (offerProduct && offerProduct.length == 0 && product && product.status == 7) {
+                // Product = confirmado-producto-entregado-admin (7) => confirmado-producto-entregado-taller (8)
+                if (product) {
+                  product.status = 8;
+                  await this.productRepository.updateById(product.id, product);
+                }
+              }
+              const productsNotConfirm: Product[] = await this.productRepository.find({ where: { idOrder: new ObjectId(offer.idOrder), status: {inq: [1, 2, 3, 4, 5, 6, 7]}}});
+              if (productsNotConfirm && productsNotConfirm.length === 0) {
+                const order: Order = await this.orderRepository.findById(offer.idOrder);
+                if (order) {
+                  order.status = 4;
+                  await this.orderRepository.updateById(order.id, order);
+                }
               }
             } catch(error) {
               console.log(error);
