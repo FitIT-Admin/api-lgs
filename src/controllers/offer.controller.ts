@@ -403,7 +403,7 @@ require('dotenv').config();
             offerResult = await offerCollection.aggregate([
               {
                 '$match': {
-                  'status': {$in: [ 5,6 ]},
+                  'status': {$in: [ 5,6,7,8 ]},
                   'company': {$in:comp},
                   'createBy' : email
                 }
