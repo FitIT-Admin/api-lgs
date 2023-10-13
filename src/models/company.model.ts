@@ -18,6 +18,12 @@ export class Company extends TimestampEntity {
 
   @property({
     type: 'string',
+    required: false,
+  })
+  billingType?: string;
+
+  @property({
+    type: 'string',
     required: true,
   })
   name: string;

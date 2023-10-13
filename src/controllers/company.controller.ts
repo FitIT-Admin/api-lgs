@@ -177,6 +177,9 @@ import { Offer, User } from '../models';
       const companyTemp: Company = await this.companyRepository.findById(id);
       if (companyTemp.rut === company.rut) {
         companyTemp.name = company.name;
+        if (company.billingType) {
+          companyTemp.billingType = company.billingType;
+        }
         companyTemp.type = company.type;
         companyTemp.direction = company.direction;
         companyTemp.region = company.region;
