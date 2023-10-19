@@ -126,6 +126,40 @@ import { Offer, User } from '../models';
         throw new HttpErrors.ExpectationFailed('Error al buscar Companies');
       }
     }
+    @get('/companies/brands/{email}')
+    @response(200, {
+      description: 'Array of Company model instances',
+      content: {
+        'application/json': {
+          schema: getModelSchemaRef(Company, {includeRelations: true}),
+        }
+      }
+    })
+    @authenticate('jwt')
+    async findBrandOfCompanies(
+        @param.path.string('email') email: string
+    ): Promise<string[]> {
+      try {
+        const companies: Company[] = await this.companyRepository.find({where: {createBy: email}});
+        let brands: string[] = [];
+        for (let company of companies) {
+          for (let make of company.make) {
+            if (brands.length > 0) {
+              // Busca si el elemento "make" existe dentro del arreglo "brands"
+              if (!brands.includes(make)) {
+                brands.push(make);
+              }
+            } else {
+              brands.push(make);
+            }
+          }
+        }
+        return (brands && brands.length > 0) ? brands : [];
+      } catch(error) {
+        console.log(error);
+        throw new HttpErrors.ExpectationFailed('Error al buscar Companies');
+      }
+    }
     @get('/companies/byemail/{email}/byrut/{rut}')
     @response(200, {
       description: 'Array of Company model instances',
