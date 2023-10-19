@@ -120,8 +120,7 @@ export class ProductController {
             throw new HttpErrors.ExpectationFailed('Error al buscar');
         }
     }
-   
-    @get('/product/byemail/filter/{email}/{brand}', {
+    @post('/product/count/not-offer/byemail/{email}', {
     responses: {
       '200': {
         description: 'Array of Products model instances',
@@ -137,22 +136,96 @@ export class ProductController {
     },
   })
   @authenticate('jwt')
-  async findOffersFilter(
+  async countProductsNotOfferByEmail(
     @param.path.string('email') email: string,
-    @param.path.string('brand') brand: string
+    @requestBody() parameters: {date: string, brand: string[]},
+  ): Promise<{count: number}> {
+        try {
+          let data: OrderWithProductOffer[] = [];
+          var query: {} = {};
+          if (parameters.brand.length <= 0) {
+            query = { where: { status: {inq: [1,2]}}, order: ['createdAt DESC'] };
+          } else if (parameters.brand[0] === "all") {
+            query = { where: { status: {inq: [1,2]}}, order: ['createdAt DESC'] };
+          } else {
+            query = { where: { status: {inq: [1,2]}, brand: { $in: parameters.brand}}, order: ['createdAt DESC'] };
+          }
+          const period: {dateStart: Date, dateEnd: Date} = this.getPeriod(parameters.date);
+          const orders: Order[] = await this.orderRepository.find(query);
+          for (let order of orders) {
+            
+            const products: Product[] = await this.productRepository.find({ 
+              where: { 
+                and: [
+                  {status: { inq: [1,2]}}, 
+                  {idOrder: new ObjectId(order.id)}, 
+                  {createdAt: {$gte: period.dateStart}},
+                  {createdAt: {$lte: period.dateEnd}}
+                ]
+              }
+            });
+            if (products && products.length > 0) {
+              for (let product of products) {
+                data.push({
+                  order: order,
+                  product: product,
+                  offers: []
+                });
+                const offers: Offer[] = await this.offerRepository.find({ where: { createBy: email, idProduct: new ObjectId(product.id), status: { inq: [2,3]} }});
+                data[data.length-1].offers = offers
+              }
+            }
+          }
+          return (data && data.length > 0) ? {count: data.length} : {count: 0};
+        } catch(error) {
+            throw new HttpErrors.ExpectationFailed('Error al buscar');
+        }
+    }
+    @post('/product/not-offer/byemail/{email}/skip/{skip}/limit/{limit}', {
+    responses: {
+      '200': {
+        description: 'Array of Products model instances',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'array',
+              items: getModelSchemaRef(Product, {includeRelations: true}),
+            },
+          },
+        },
+      },
+    },
+  })
+  @authenticate('jwt')
+  async findProductsNotOfferByEmail(
+    @param.path.string('email') email: string,
+    @param.path.string('skip') skip: string,
+    @param.path.string('limit') limit: string,
+    @requestBody() parameters: {date: string, brand: string[]},
   ): Promise<OrderWithProductOffer[]> {
         try {
           let data: OrderWithProductOffer[] = []
-          let brands: string[] = brand.split(',');
           var query: {} = {};
-          if (brand === 'all') {
+          if (parameters.brand.length <= 0) {
+            query = { where: { status: {inq: [1,2]}}, order: ['createdAt DESC'] };
+          } else if (parameters.brand[0] === "all") {
             query = { where: { status: {inq: [1,2]}}, order: ['createdAt DESC'] };
           } else {
-            query = { where: { status: {inq: [1,2]}, brand: { $in: brands}}, order: ['createdAt DESC'] };
+            query = { where: { status: {inq: [1,2]}, brand: { $in: parameters.brand}}, order: ['createdAt DESC'] };
           }
+          const period: {dateStart: Date, dateEnd: Date} = this.getPeriod(parameters.date);
           const orders: Order[] = await this.orderRepository.find(query);
           for (let order of orders) {
-            const products: Product[] = await this.productRepository.find({ where: { status: { inq: [1,2]}, idOrder: new ObjectId(order.id)}, order: ['createdAt DESC']});
+            const products: Product[] = await this.productRepository.find({ 
+              where: { 
+                and: [
+                  {status: { inq: [1,2]}}, 
+                  {idOrder: new ObjectId(order.id)},
+                  {createdAt: {$gte: period.dateStart}},
+                  {createdAt: {$lte: period.dateEnd}},
+                ]
+              }
+            });
             if (products && products.length > 0) {
               for (let product of products) {
                 data.push({
@@ -370,5 +443,21 @@ export class ProductController {
             throw new HttpErrors.ExpectationFailed('Error al buscar por id');
         }
     }
+  private getPeriod(date: string): {dateStart: Date, dateEnd: Date} {
+    let monthSelect: string = date.split(" ")[0];
+    let yearSelect: string = date.split(" ")[1];
+    const months = [
+      "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+      "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+    ];
+    let maxDays: number = this.daysInMonth(months.indexOf(monthSelect), Number(yearSelect))
+    return {
+      dateStart: new Date(yearSelect+"-"+(String(months.indexOf(monthSelect) + 1)).padStart(2, '0')+"-01T00:00:00.000Z"),
+      dateEnd: new Date(yearSelect+"-"+(String(months.indexOf(monthSelect) + 1)).padStart(2, '0')+"-"+String(maxDays).padStart(2, '0')+"T23:59:59.999Z")
+    }
+  }
+  private daysInMonth(iMonth  : number , iYear : number) {
+    return 32 - new Date(iYear, iMonth, 32).getDate();
+  }
 
 }
