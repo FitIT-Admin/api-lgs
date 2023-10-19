@@ -377,35 +377,27 @@ require('dotenv').config();
         throw new HttpErrors.ExpectationFailed('Error al buscar contador');
       }
     }
-    
-    @post('/offer/active/byemail/')
+    @post('/offer/sales/count/byemail/{email}')
     @response(200, {
       description: 'Offer model instance',
       content: {'application/json': {schema: getModelSchemaRef(Product)}},
     })
-    async getByCompaniesAndEmail(
-      @requestBody() body:any
-    ): Promise<any> {
+    async getCountSalesByEmail(
+      @requestBody() parameters: {date: string, status: string},
+      @param.path.string('email') email: string
+    ): Promise<{count: number}> {
       try {
-        let email = body.email;
-        let companies = body.companies;
-        let comp:any = [];
-        
-        for(let i=0;i<companies.length;i++){
-            comp.push(companies[i]);
-        } 
-    
         let offerResult: any;
         
         const offerCollection = (this.offerRepository.dataSource.connector as any).collection("Offer");
         if (offerCollection) {
-        
+            const period: {dateStart: Date, dateEnd: Date} = this.getPeriod(parameters.date);
             offerResult = await offerCollection.aggregate([
               {
                 '$match': {
-                  'status': {$in: [ 5,6,7,8 ]},
-                  'company': {$in:comp},
-                  'createBy' : email
+                  'status': (parameters.status === "") ? {$in: [ 5,6,7,8 ]} : (parameters.status === "67") ? {$in: [ 6,7 ]} : Number(parameters.status),
+                  'createBy' : email,
+                  'createdAt': {'$gte': period.dateStart, '$lte': period.dateEnd}
                 }
               }, {
                 '$lookup': {
@@ -432,6 +424,68 @@ require('dotenv').config();
             ]).get();
         }
         
+        return (offerResult.length > 0) ? {count: offerResult.length} : {count: 0};
+        
+      } catch(error) {
+        console.log(error);
+        throw new HttpErrors.ExpectationFailed('Error al buscar contador');
+      }
+    }
+    @post('/offer/sales/byemail/{email}/skip/{skip}/limit/{limit}')
+    @response(200, {
+      description: 'Offer model instance',
+      content: {'application/json': {schema: getModelSchemaRef(Product)}},
+    })
+    async getSalesByEmail(
+      @requestBody() parameters: {date: string, status: string},
+      @param.path.string('email') email: string,
+      @param.path.number('skip') skip: number,
+      @param.path.number('limit') limit: number
+    ): Promise<any> {
+      try {
+        let offerResult: any;
+        
+        const offerCollection = (this.offerRepository.dataSource.connector as any).collection("Offer");
+        if (offerCollection) {
+            const period: {dateStart: Date, dateEnd: Date} = this.getPeriod(parameters.date);
+            offerResult = await offerCollection.aggregate([
+              {
+                '$match': {
+                  'status': (parameters.status === "") ? {$in: [ 5,6,7,8 ]} : (parameters.status === "67") ? {$in: [ 6,7 ]} : Number(parameters.status),
+                  'createBy' : email,
+                  'createdAt': {'$gte': period.dateStart, '$lte': period.dateEnd}
+                }
+              }, {
+                '$lookup': {
+                  'from': 'Product',
+                  'localField': 'idProduct',
+                  'foreignField': '_id',
+                  'as': 'product'
+                }
+              }, {
+                '$lookup': {
+                  'from': 'Order',
+                  'localField': 'idOrder',
+                  'foreignField': '_id',
+                  'as': 'order'
+                }
+              }, {
+                '$addFields': {
+                  'product': { '$first': "$product" }, 'order': { '$first': "$order" },"id":"$_id"
+                }
+              }, 
+              {
+                '$sort': { _id: 1 }
+              },
+              {
+                '$skip': skip
+              },
+              {
+                '$limit': limit
+              }
+            ]).get();
+        }
+        
         return (offerResult.length > 0) ? offerResult : [];
         
       } catch(error) {
@@ -439,7 +493,7 @@ require('dotenv').config();
         throw new HttpErrors.ExpectationFailed('Error al buscar contador');
       }
     }
-    @get('/offer/byemail/{email}/skip/{skip}/limit/{limit}')
+    @post('/offer/byemail/{email}/skip/{skip}/limit/{limit}')
     @response(200, {
         description: 'Offer model instance',
         content: {
@@ -450,6 +504,7 @@ require('dotenv').config();
     })
     @authenticate('jwt')
     async findByEmail(
+        @requestBody() parameters: {date: string, status: string},
         @param.path.string('email') email: string,
         @param.path.number('skip') skip: number,
         @param.path.number('limit') limit: number
@@ -457,11 +512,13 @@ require('dotenv').config();
       let offerResult: any;
       const offerCollection = (this.offerRepository.dataSource.connector as any).collection("Offer");
       if (offerCollection) {
+        let period: {dateStart: Date, dateEnd: Date} = this.getPeriod(parameters.date);
         offerResult = await offerCollection.aggregate([
           {
             '$match': {
-              'status': {$in: [ -4, -3, -2, 1, 2, 3, 4 ]},
-              'createBy' : email
+              'status': (parameters.status === "") ? {$in: [ -4, -3, -2, 1, 2, 3, 4 ]} : (parameters.status === "-3-4") ? {$in: [ -4, -3 ]} : Number(parameters.status),
+              'createBy' : email,
+              'createdAt': {'$gte': period.dateStart, '$lte': period.dateEnd}
             }
           }, {
             '$lookup': {
@@ -495,7 +552,7 @@ require('dotenv').config();
       }
       return (offerResult.length > 0) ? offerResult : [];
     }
-    @get('/offer/count/byemail/{email}')
+    @post('/offer/count/byemail/{email}')
     @response(200, {
         description: 'Offer model instance',
         content: {
@@ -506,9 +563,22 @@ require('dotenv').config();
     })
     @authenticate('jwt')
     async countByEmail(
+        @requestBody() parameters: {date: string, status: string},
         @param.path.string('email') email: string
     ): Promise<{count: number}> {
-      var offers: Offer[] = await this.offerRepository.find({ where: { status: {inq: [-4, -3, -2, 1, 2, 3, 4]}, createBy: email}});
+      let period: {dateStart: Date, dateEnd: Date} = this.getPeriod(parameters.date);
+      var offers: Offer[] = await this.offerRepository.find(
+        { 
+          where: {
+            and: [
+              {status: (parameters.status === "") ? {inq: [-4, -3, -2, 1, 2, 3, 4]} : (parameters.status === "-3-4") ? {inq: [-4, -3 ]} : Number(parameters.status)},
+              {createBy: email},
+              {createdAt: {$gte: period.dateStart}},
+              {createdAt: {$lte: period.dateEnd}},
+            ]
+          }
+        }
+      );
       for (let offer of offers) {
         if ((new Date((offer.timerVigency) ? offer.timerVigency : new Date()).getTime() - new Date().getTime()) <= 0) {
           if (offer.status === 2) {
@@ -601,6 +671,22 @@ require('dotenv').config();
     notification.pushAttempts = pushAttempts;
     notification.send = send;
     await this.notificationRepository.create(notification);
+  }
+  private getPeriod(date: string): {dateStart: Date, dateEnd: Date} {
+    let monthSelect: string = date.split(" ")[0];
+    let yearSelect: string = date.split(" ")[1];
+    const months = [
+      "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+      "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+    ];
+    let maxDays: number = this.daysInMonth(months.indexOf(monthSelect), Number(yearSelect))
+    return {
+      dateStart: new Date(yearSelect+"-"+(String(months.indexOf(monthSelect) + 1)).padStart(2, '0')+"-01T00:00:00.000Z"),
+      dateEnd: new Date(yearSelect+"-"+(String(months.indexOf(monthSelect) + 1)).padStart(2, '0')+"-"+String(maxDays).padStart(2, '0')+"T23:59:59.999Z")
+    }
+  }
+  private daysInMonth(iMonth  : number , iYear : number) {
+    return 32 - new Date(iYear, iMonth, 32).getDate();
   }
 }
   
