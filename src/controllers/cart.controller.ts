@@ -123,7 +123,40 @@ import { OfferWithData } from '../interface/offer-with-data.interface';
                 throw new HttpErrors.ExpectationFailed('Error al buscar por id');
             }
       }
-      @get('/cart/purchases/orders/{email}', {
+      @post('/cart/purchases/orders/count/{email}', {
+        responses: {
+          '200': {
+            description: 'Offer model instance',
+            content: {
+              'application/json': {
+                schema: getModelSchemaRef(Offer, {includeRelations: true}),
+              },
+            },
+          },
+        },
+      })
+      @authenticate('jwt')
+      async countPurchases(
+        @requestBody() parameters: {date: string, status: string},
+        @param.path.string('email') email: string
+      ): Promise<{count: number}> {
+            try {
+              const period: {dateStart: Date, dateEnd: Date} = this.getPeriod(parameters.date);
+              const offers: {count: number} = await this.offerRepository.count({
+                and: [
+                  {acceptedByUser: email},
+                  {status: (parameters.status === "45") ? {inq: [4,5]} : (parameters.status === "") ? {inq: [4, 5, 6, 7, 8]} : Number(parameters.status)},
+                  {createdAt: {$gte: period.dateStart}},
+                  {createdAt: {$lte: period.dateEnd}}
+                ]
+              });
+              return (offers && offers.count) ? offers : {count: 0}
+            } catch(error) {
+                console.log(error);
+                throw new HttpErrors.ExpectationFailed('Error al buscar por id');
+            }
+      }
+      @post('/cart/purchases/orders/{email}/skip/{skip}/limit/{limit}', {
         responses: {
           '200': {
             description: 'Offer model instance',
@@ -137,17 +170,20 @@ import { OfferWithData } from '../interface/offer-with-data.interface';
       })
       @authenticate('jwt')
       async findPurchases(
+        @requestBody() parameters: {date: string, status: string},
         @param.path.string('email') email: string
       ): Promise<OfferWithData[]> {
             try {
                 let offerResult: OfferWithData[] = [];
                 const offerCollection = await (this.offerRepository.dataSource.connector as any).collection("Offer");
                 if (offerCollection) {
+                  const period: {dateStart: Date, dateEnd: Date} = this.getPeriod(parameters.date);
                   offerResult = await offerCollection.aggregate([
                       {
                         '$match': {
-                          'status': { '$in': [4, 5, 6, 7, 8]},
-                          'acceptedByUser': email
+                          'status': (parameters.status === "45") ? {'$in': [4, 5]} : (parameters.status === "") ? { '$in': [4, 5, 6, 7, 8]} : Number(parameters.status),
+                          'acceptedByUser': email,
+                          'createdAt': {'$gte': period.dateStart, '$lte': period.dateEnd}
                         }
                       }, {
                         '$lookup': {
@@ -351,6 +387,21 @@ import { OfferWithData } from '../interface/offer-with-data.interface';
       notification.send = send;
       await this.notificationRepository.create(notification);
     }
-    
+    private getPeriod(date: string): {dateStart: Date, dateEnd: Date} {
+      let monthSelect: string = date.split(" ")[0];
+      let yearSelect: string = date.split(" ")[1];
+      const months = [
+        "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+        "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+      ];
+      let maxDays: number = this.daysInMonth(months.indexOf(monthSelect), Number(yearSelect))
+      return {
+        dateStart: new Date(yearSelect+"-"+(String(months.indexOf(monthSelect) + 1)).padStart(2, '0')+"-01T00:00:00.000Z"),
+        dateEnd: new Date(yearSelect+"-"+(String(months.indexOf(monthSelect) + 1)).padStart(2, '0')+"-"+String(maxDays).padStart(2, '0')+"T23:59:59.999Z")
+      }
+    }
+    private daysInMonth(iMonth  : number , iYear : number) {
+      return 32 - new Date(iYear, iMonth, 32).getDate();
+    }
   }
   
