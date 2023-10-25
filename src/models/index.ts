@@ -29,3 +29,4 @@ export * from './product.model';
 export * from './vehicle-list.model';
 export * from './company.model';
 export * from './notification.model';
+export * from './trx-logs.model';
