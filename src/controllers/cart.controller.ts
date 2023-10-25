@@ -106,7 +106,7 @@ import { OfferWithData } from '../interface/offer-with-data.interface';
                           }
                         } else {
                           if (orderOffers.length > 0 && orderOffers[orderOffers.length -1].productWithOffers.length <= 0) {
-                            console.log("eliminar orderOffers");
+                            //console.log("eliminar orderOffers");
                             orderOffers.splice(orderOffers.length -1, 1);
                           }
                         }
