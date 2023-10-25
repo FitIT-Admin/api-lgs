@@ -19,14 +19,15 @@ import {
   response,
 } from '@loopback/rest';
 import {authenticate} from '@loopback/authentication';
-import { CompanyRepository, OfferRepository, OrderRepository, UserRepository } from '../repositories';
+import { CompanyRepository, OfferRepository, OrderRepository, trxLogsRepository, UserRepository } from '../repositories';
 import { Company } from '../models/company.model';
-import { Offer, User } from '../models';
+import { Offer, trxLogs, User } from '../models';
   export class CompanyController {
     
     constructor(
       @repository(CompanyRepository) public companyRepository : CompanyRepository,
       @repository(UserRepository) public userRepository: UserRepository,
+      @repository(trxLogsRepository) public trxLogsRepository: trxLogsRepository,
       @repository(OrderRepository) public orderRepository: OrderRepository,
       @repository(OfferRepository) public offerRepository: OfferRepository,
     ) {}
@@ -55,7 +56,10 @@ import { Offer, User } from '../models';
         if (!searchCompany || searchCompany.length <= 0) {
           user[0].status = 1;
           await this.userRepository.updateById(user[0].id, user[0]);
-          return await this.companyRepository.create(company);
+          await this.companyRepository.create(company);
+          const companyTemp: Company[] = await this.companyRepository.find({where: {rut: company.rut}});
+          await this.createTrxLog(companyTemp[0], null, "create");
+          return companyTemp[0];
         } else {
           throw new HttpErrors.Unauthorized('rut repetido');
         }
@@ -210,6 +214,7 @@ import { Offer, User } from '../models';
     ): Promise<void> {
       const companyTemp: Company = await this.companyRepository.findById(id);
       if (companyTemp.rut === company.rut) {
+        await this.createTrxLog(company, companyTemp, "update");
         companyTemp.name = company.name;
         if (company.billingType) {
           companyTemp.billingType = company.billingType;
@@ -230,7 +235,11 @@ import { Offer, User } from '../models';
         if (searchCompany && searchCompany.length > 0) {
           throw new HttpErrors.ExpectationFailed('rut repetido');
         } else {
+          await this.createTrxLog(company, companyTemp, "update");
           companyTemp.rut = company.rut;
+          if (company.billingType) {
+            companyTemp.billingType = company.billingType;
+          }
           companyTemp.name = company.name;
           companyTemp.type = company.type;
           companyTemp.direction = company.direction;
@@ -265,6 +274,64 @@ import { Offer, User } from '../models';
         companyTemp.status = -1;
         await this.companyRepository.updateById(companyTemp.id, companyTemp);
         console.log("Delete Company: "+companyTemp.rut+", "+companyTemp.name);
+      }
+    }
+    private async createTrxLog(companyNew: Company, companyPre: Company | null, type: string) {
+      if (type === "update" && companyPre) {
+        let makesNew: string = ""
+        let makesPre: string = ""
+        if (companyNew.make && companyNew.make.length > 0) {
+          for (let make of companyNew.make) {
+            makesNew = makesNew + make + " ";
+          }
+        } else {
+          makesNew = "no tiene";
+        }
+        if (companyPre.make && companyPre.make.length > 0) {
+          for (let make of companyPre.make) {
+            makesPre = makesPre + make + " ";
+          }
+        } else {
+          makesPre = "no tiene";
+        }
+        let trxLog: trxLogs = new trxLogs();
+        trxLog.createdAt = new Date().toISOString();
+        trxLog.updatedAt = new Date().toISOString();
+        trxLog.trxType = "UpdateBillingType";
+        trxLog.module = "UsersWeb";
+        trxLog.userId = companyNew.createBy;
+        trxLog.details = "createdAtNew:"+companyNew.createdAt+",updatedAtNew:"+companyNew.updatedAt+",rutNew:"+companyNew.rut+",billingTypeNew:"+companyNew.billingType
+        +",nameNew:"+companyNew.name+",typeNew:"+companyNew.type+",createByNew:"+companyNew.createBy+",directionNew:"+companyNew.direction+",regionNew:"
+        +companyNew.region+",communeNew:"+companyNew.commune+",phoneNew:"+companyNew.phone+",accountNumberNew:"+companyNew.accountNumber+
+        ",accountTypeNew:"+companyNew.accountType+",bankNew:"+companyNew.bank+",makeNew:"+makesNew+",statusNew:"+companyNew.status
+        +
+        "createdAtPre:"+companyPre.createdAt+",updatedAtPre:"+companyPre.updatedAt+",rutPre:"+companyPre.rut+",billingTypePre:"+companyPre.billingType
+        +",namePre:"+companyPre.name+",typePre:"+companyPre.type+",createByPre:"+companyPre.createBy+",directionPre:"+companyPre.direction+",regionPre:"
+        +companyPre.region+",communePre:"+companyPre.commune+",phonePre:"+companyPre.phone+",accountNumberPre:"+companyPre.accountNumber+
+        ",accountTypePre:"+companyPre.accountType+",bankPre:"+companyPre.bank+",makePre:"+makesPre+",statusPre:"+companyPre.status;
+        trxLog.logLevel = "info";
+        await this.trxLogsRepository.create(trxLog);
+      } else if (type === "create") {
+        let makes: string = ""
+        if (companyNew.make && companyNew.make.length > 0) {
+          for (let make of companyNew.make) {
+            makes = makes + make + " ";
+          }
+        } else {
+          makes = "no tiene";
+        }
+        let trxLog: trxLogs = new trxLogs();
+        trxLog.createdAt = new Date().toISOString();
+        trxLog.updatedAt = new Date().toISOString();
+        trxLog.trxType = "CreateBillingType";
+        trxLog.module = "UsersWeb";
+        trxLog.userId = companyNew.createBy;
+        trxLog.details = "createdAt:"+companyNew.createdAt+",updatedAt:"+companyNew.updatedAt+",rut:"+companyNew.rut+",billingType:"+companyNew.billingType
+        +",name:"+companyNew.name+",type:"+companyNew.type+",createBy:"+companyNew.createBy+",direction:"+companyNew.direction+",region:"+companyNew.region+",commune:"
+        +companyNew.commune+",phone:"+companyNew.phone+",accountNumber:"+companyNew.accountNumber+",accountType:"+companyNew.accountType+",bank:"+
+        companyNew.bank+",make:"+makes+",status:"+companyNew.status;
+        trxLog.logLevel = "info";
+        await this.trxLogsRepository.create(trxLog);
       }
     }
   }

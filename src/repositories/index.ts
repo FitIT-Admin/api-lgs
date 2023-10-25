@@ -30,3 +30,4 @@ export * from './vehicle-list.repository';
 export * from './company.repository';
 export * from './notification.repository';
 export * from './location.repository';
+export * from './trx-logs.repository';

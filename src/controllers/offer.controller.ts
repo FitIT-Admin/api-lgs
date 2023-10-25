@@ -298,6 +298,14 @@ require('dotenv').config();
                         product.qty = product.qty - sum;
                         await this.productRepository.updateById(product.id, product);
                     }
+                    // rechazar ofertas que no fueron adjudicadas
+                    const rejectOffers: Offer[] = await this.offerRepository.find({ where: { status: 2, idProduct: new ObjectId(product.id)}})
+                    if (rejectOffers && rejectOffers.length > 0) {
+                      for (let offer of rejectOffers) {
+                        offer.status = -2;
+                        await this.offerRepository.updateById(offer.id, offer);
+                      }
+                    }
                 }
             }
         } catch (error) {
