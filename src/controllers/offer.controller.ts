@@ -331,6 +331,7 @@ require('dotenv').config();
       description: 'Offer model instance',
       content: {'application/json': {schema: getModelSchemaRef(Product)}},
     })
+    @authenticate('jwt')
     async getByCompanies(
       @requestBody() companies: []
     ): Promise<any> {
@@ -390,6 +391,7 @@ require('dotenv').config();
       description: 'Offer model instance',
       content: {'application/json': {schema: getModelSchemaRef(Product)}},
     })
+    @authenticate('jwt')
     async getCountSalesByEmail(
       @requestBody() parameters: {date: string, status: string},
       @param.path.string('email') email: string
@@ -444,6 +446,7 @@ require('dotenv').config();
       description: 'Offer model instance',
       content: {'application/json': {schema: getModelSchemaRef(Product)}},
     })
+    @authenticate('jwt')
     async getSalesByEmail(
       @requestBody() parameters: {date: string, status: string},
       @param.path.string('email') email: string,
