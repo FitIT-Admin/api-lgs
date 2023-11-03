@@ -61,6 +61,7 @@ import { Offer, trxLogs, User } from '../models';
           await this.createTrxLog(companyTemp[0], null, "create");
           return companyTemp[0];
         } else {
+          this.createTrxLog(searchCompany[0], null, "repeated rut");
           throw new HttpErrors.Unauthorized('rut repetido');
         }
       } else {
@@ -324,6 +325,27 @@ import { Offer, trxLogs, User } from '../models';
         trxLog.createdAt = new Date().toISOString();
         trxLog.updatedAt = new Date().toISOString();
         trxLog.trxType = "CreateBillingType";
+        trxLog.module = "UsersWeb";
+        trxLog.userId = companyNew.createBy;
+        trxLog.details = "createdAt:"+companyNew.createdAt+",updatedAt:"+companyNew.updatedAt+",rut:"+companyNew.rut+",billingType:"+companyNew.billingType
+        +",name:"+companyNew.name+",type:"+companyNew.type+",createBy:"+companyNew.createBy+",direction:"+companyNew.direction+",region:"+companyNew.region+",commune:"
+        +companyNew.commune+",phone:"+companyNew.phone+",accountNumber:"+companyNew.accountNumber+",accountType:"+companyNew.accountType+",bank:"+
+        companyNew.bank+",make:"+makes+",status:"+companyNew.status;
+        trxLog.logLevel = "info";
+        await this.trxLogsRepository.create(trxLog);
+      } else if (type === "repeated rut") {
+        let makes: string = ""
+        if (companyNew.make && companyNew.make.length > 0) {
+          for (let make of companyNew.make) {
+            makes = makes + make + " ";
+          }
+        } else {
+          makes = "no tiene";
+        }
+        let trxLog: trxLogs = new trxLogs();
+        trxLog.createdAt = new Date().toISOString();
+        trxLog.updatedAt = new Date().toISOString();
+        trxLog.trxType = "repeatedRutBillingType";
         trxLog.module = "UsersWeb";
         trxLog.userId = companyNew.createBy;
         trxLog.details = "createdAt:"+companyNew.createdAt+",updatedAt:"+companyNew.updatedAt+",rut:"+companyNew.rut+",billingType:"+companyNew.billingType
