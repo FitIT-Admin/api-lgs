@@ -28,7 +28,8 @@ import { Product } from '../models/product.model';
 import { ObjectId } from 'mongodb';
 import { OfferWithData } from '../interface/offer-with-data.interface';
 import { OrderWithProductOffer } from '../interface/order-with-product-offer.interface';
-import { Offer, Order } from '../models';
+import { Offer, Order, User } from '../models';
+import { UserRepository } from '../repositories';
 //import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
 //import {inject} from '@loopback/core';
 
@@ -37,7 +38,8 @@ export class ProductController {
   constructor(
     @repository(ProductRepository) public productRepository: ProductRepository,
     @repository(OfferRepository) public offerRepository: OfferRepository,
-    @repository(OrderRepository) public orderRepository: OrderRepository
+    @repository(OrderRepository) public orderRepository: OrderRepository,
+    @repository(UserRepository) public userRepository: UserRepository
   ) {}
 
   @post('/product')
@@ -420,8 +422,101 @@ export class ProductController {
             throw new HttpErrors.ExpectationFailed('Error al buscar por id');
         }
     }*/
-    
- @del('/offer/{id}', {
+    @post('/product/report/skip/{skip}/limit/{limit}')
+    @response(200, {
+      description: 'Product model instance',
+      content: {'application/json': {schema: getModelSchemaRef(Product)}},
+    })
+    @authenticate('jwt')
+    async productsReport(
+      @requestBody() parameters: {date: string, status: string},
+      @param.path.number('skip') skip: number,
+      @param.path.number('limit') limit: number
+    ): Promise<Product[]> {
+      try {
+        let productsResult: Product[] = [];
+        const productCollection = (this.productRepository.dataSource.connector as any).collection("Product");
+        if (productCollection) {
+            const period: {dateStart: Date, dateEnd: Date} = this.getPeriod(parameters.date);
+            productsResult = await productCollection.aggregate([
+              {
+                '$match': {
+                  'status': (parameters.status === "") ? {$in: [-1,0,1,2,3,4,5,6,7,8]} : Number(parameters.status),
+                  'createdAt': {'$gte': period.dateStart, '$lte': period.dateEnd}
+                }
+              }, 
+              {
+                '$lookup': {
+                  'from': 'Offer',
+                  'localField': '_id',
+                  'foreignField': 'idProduct',
+                  'as': 'offer'
+                }
+              }, 
+              {
+                '$lookup': {
+                  'from': 'Order',
+                  'localField': 'idOrder',
+                  'foreignField': '_id',
+                  'as': 'order'
+                }
+              }, 
+              {
+                '$addFields': {
+                  'order': { '$first': "$order" },
+                  'offerCount': { '$size': "$offer" }   // campo que guarda cantidad de ofertas
+                }
+              }, 
+              {
+                '$sort': { 'offerCount': 1 }
+              },
+              {
+                '$skip': skip
+              },
+              {
+                '$limit': limit
+              }
+            ]).get();
+        }
+        return (productsResult.length > 0) ? productsResult : [];
+        
+      } catch(error) {
+        console.log(error);
+        throw new HttpErrors.ExpectationFailed('Error al reporte de productos');
+      }
+  }
+    @post('/product/report/count')
+    @response(200, {
+      description: 'Product model instance',
+      content: {'application/json': {schema: getModelSchemaRef(Product)}},
+    })
+    @authenticate('jwt')
+    async productsReportCount(
+      @requestBody() parameters: {date: string, status: string},
+    ): Promise<{count: number}> {
+      try {
+        const period: {dateStart: Date, dateEnd: Date} = this.getPeriod(parameters.date);
+        let count: {count: number} = await this.productRepository.count({
+          and: [
+            {
+              status: (parameters.status === "") ? {inq: [-1,0,1,2,3,4,5,6,7,8]} : Number(parameters.status),
+            },
+            {
+              createdAt: {$gte: period.dateStart}
+            },
+            {
+              createdAt: {$lte: period.dateEnd}
+            },
+          ]
+        });
+        return (count) ? count : {count: 0};
+        
+      } catch(error) {
+        console.log(error);
+        throw new HttpErrors.ExpectationFailed('Error al buscar contador de reporte de productos');
+      }
+  }
+  @del('/offer/{id}', {
     responses: {
       '204': {
         description: 'Offer DELETE success',
@@ -442,7 +537,8 @@ export class ProductController {
             console.log(error);
             throw new HttpErrors.ExpectationFailed('Error al buscar por id');
         }
-    }
+  }
+
   private getPeriod(date: string): {dateStart: Date, dateEnd: Date} {
     let monthSelect: string = date.split(" ")[0];
     let yearSelect: string = date.split(" ")[1];
