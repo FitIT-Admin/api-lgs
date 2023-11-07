@@ -288,6 +288,8 @@ export class UserController {
         privilege: role.privilege,
         token: token
       };
+    } else {
+      console.log(new Date().toLocaleString('es-ES') + ', Login Failed - User Not Found: '+credentials.email);
     }
     throw new HttpErrors.Unauthorized("Usuario no registrado, debe crear una cuenta para iniciar sesión"); 
   }
