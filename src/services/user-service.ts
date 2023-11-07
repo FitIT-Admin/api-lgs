@@ -25,54 +25,59 @@ export class MyUserService implements UserService<User, Credentials> {
   ) { }
 
   async verifyCredentials(credentials: Credentials): Promise<User> {
-    console.log("verifyCredentials");
+    //console.log("verifyCredentials");
     const foundUser = await this.userRepository.findOne({
       where: {email: credentials.email},
     });
 
     if (!foundUser) {
+      console.log(new Date().toLocaleString('es-ES') + ', Login Failed - User Not Found: '+credentials.email);
       throw new HttpErrors.Unauthorized("sign-in.dntexist");
     } else if (foundUser.status == 2) {
+      console.log(new Date().toLocaleString('es-ES') + ', Login Failed - User Bloqued: '+credentials.email);
       throw new HttpErrors.Unauthorized("Actualmente su usuario esta bloqueado, comuniquese con un administrador");
     } else if (foundUser.status == 3) {
+      console.log(new Date().toLocaleString('es-ES') + ', Login Failed - User Deactivated: '+credentials.email);
       throw new HttpErrors.Unauthorized("Actualmente su usuario esta desactivado, comuniquese con un administrador");
     } else if (foundUser.status == 5) {
+      console.log(new Date().toLocaleString('es-ES') + ', Login Failed - User Status 5: '+credentials.email);
       throw new HttpErrors.Unauthorized("sign-in.withoutcred");
-    } else {
+    } else if (foundUser.status == -1) {
+      console.log(new Date().toLocaleString('es-ES') + ', Login Failed - User Deleted: '+credentials.email);
+      throw new HttpErrors.Unauthorized("Actualmente su usuario esta desactivado, comuniquese con un administrador");
+    } else if (foundUser.status == 1 || foundUser.status == 0) {
       const credentialsFound = await this.userRepository.findCredentials(foundUser.email);
       if (!credentialsFound) {
+        console.log(new Date().toLocaleString('es-ES') + ', Login Failed - Credentials Not Found: '+credentials.email);
         throw new HttpErrors.Unauthorized("sign-in.withoutcred");
       }
-
-      if (foundUser.status == 1 || foundUser.status == 0) {
-        const passwordMatched = await this.passwordHasher.comparePassword(
-          credentials.password,
-          credentialsFound.password,
-        );
-
-        if (!passwordMatched) {
-          let failedAttempts = foundUser.failedAttempts + 1
-          if (failedAttempts < 3) {
-            await this.userRepository.updateById(foundUser.id, {failedAttempts: failedAttempts})
-            await this.auditAuthenticationRepository.create(registerAuditAuth(foundUser.id, 0));
-            let attempts = 3 - failedAttempts;
-            console.log(new Date().toLocaleString('es-ES') + ', ' + credentialsFound.userId + ', Login Failed - attempts:'+ attempts.toString());
-            throw new HttpErrors.Unauthorized("Contraseña incorrecta, le quedan " + attempts.toString() + " intentos.");
-          } else {
-            /** Bloqued User */
-            console.log(new Date().toLocaleString('es-ES') + ', ' + credentialsFound.userId + ', Login Failed - User Blocked');
-            await this.userRepository.updateById(foundUser.id, {status: 2, failedAttempts: 3})
-            await this.auditActionsRepository.create(registerAuditAction(foundUser.id, "Cuenta bloqueada por intentos falladios"));
-            throw new HttpErrors.Unauthorized("Cuenta bloqueada por intentos fallidos");
-          }
+      const passwordMatched = await this.passwordHasher.comparePassword(
+        credentials.password,
+        credentialsFound.password,
+      );
+      if (!passwordMatched) {
+        let failedAttempts = foundUser.failedAttempts + 1
+        if (failedAttempts < 3) {
+          await this.userRepository.updateById(foundUser.id, {failedAttempts: failedAttempts})
+          await this.auditAuthenticationRepository.create(registerAuditAuth(foundUser.id, 0));
+          let attempts = 3 - failedAttempts;
+          console.log(new Date().toLocaleString('es-ES') + ', ' + credentialsFound.userId + ', Login Failed - attempts:'+ attempts.toString());
+          throw new HttpErrors.Unauthorized("Contraseña incorrecta, le quedan " + attempts.toString() + " intentos.");
         } else {
-          console.log(new Date().toLocaleString('es-ES') + ', ' + credentialsFound.userId + ', Login OK');
-          await this.userRepository.updateById(foundUser.id, {failedAttempts: 0})
+          /** Bloqued User */
+          console.log(new Date().toLocaleString('es-ES') + ', ' + credentialsFound.userId + ', Login Failed - User now Blocked');
+          await this.userRepository.updateById(foundUser.id, {status: 2, failedAttempts: 3})
+          await this.auditActionsRepository.create(registerAuditAction(foundUser.id, "Cuenta bloqueada por intentos falladios"));
+          throw new HttpErrors.Unauthorized("Cuenta bloqueada por intentos fallidos");
         }
-
+      } else {
+        console.log(new Date().toLocaleString('es-ES') + ', ' + credentialsFound.userId + ', Login OK');
+        await this.userRepository.updateById(foundUser.id, {failedAttempts: 0})
       }
-
       return foundUser;
+    } else {
+      console.log(new Date().toLocaleString('es-ES') + ', Login Failed - User Status Unknown: '+credentials.email);
+      throw new HttpErrors.Unauthorized("Usuario con estado desconocido, comuniquese con un administrador");
     }
   }
 

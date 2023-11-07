@@ -29,8 +29,8 @@ import {
 
   UserServiceBindings
 } from '../keys';
-import {Role, User, UserCredentials} from '../models';
-import {AuditActionsRepository, AuditAuthenticationRepository, Credentials, RecoverPasswordRepository, UserRepository, RoleRepository, RegisterCredentials, UserCredentialsRepository} from '../repositories';
+import {Role, trxLogs, User, UserCredentials} from '../models';
+import {AuditActionsRepository, AuditAuthenticationRepository, Credentials, RecoverPasswordRepository, UserRepository, RoleRepository, RegisterCredentials, UserCredentialsRepository, trxLogsRepository} from '../repositories';
 import {EmailManager} from '../services/email.service';
 import {PasswordHasher} from '../services/hash.password.bcryptjs';
 import {registerAuditAction, registerAuditAuth} from '../services/validator';
@@ -50,6 +50,7 @@ export type IsLoggedIn = {
 export class UserController {
   constructor(
     @repository(RecoverPasswordRepository) public recoverPasswordRepository: RecoverPasswordRepository,
+    @repository(trxLogsRepository) public trxLogsRepository: trxLogsRepository,
     @repository(UserRepository) public userRepository: UserRepository,
     @repository(AuditAuthenticationRepository) public auditAuthenticationRepository: AuditAuthenticationRepository,
     @repository(AuditActionsRepository) public auditActionsRepository: AuditActionsRepository,
@@ -187,6 +188,7 @@ export class UserController {
       //users[0].cod_tango = user.cod_tango;
       //users[0].rut = user.rut;
       await this.userRepository.updateById(users[0].id, users[0]);
+      await this.createTrxLog(user, users[0], "update");
     }
   }
 
@@ -288,6 +290,8 @@ export class UserController {
         privilege: role.privilege,
         token: token
       };
+    } else {
+      console.log(new Date().toLocaleString('es-ES') + ', Login Failed - User Not Found: '+credentials.email);
     }
     throw new HttpErrors.Unauthorized("Usuario no registrado, debe crear una cuenta para iniciar sesión"); 
   }
@@ -343,8 +347,10 @@ export class UserController {
         var newUserCredentials = await this.userCredentialsRepository.create(userCredentials);
         // Registro de creacion de usuario y credenciales
         await this.auditActionsRepository.create(registerAuditAction(newUser.id, "Creacion de Usuario y credenciales"));
+        await this.createTrxLog(user, null, 'create');
         return true;
       } else {
+        await this.createTrxLog(users[0], null, 'repeated email');
         throw new HttpErrors.Conflict('El email ya se encuentra registrado en el sistema, intente con otro email');
       }
     //} catch (ex) {
@@ -421,5 +427,44 @@ export class UserController {
     const role = await this.roleRepository.searchSlug(id);
     if (role.length > 0) return role[0];
     return await this.roleRepository.findById(id);
+  }
+  private async createTrxLog(userNew: User, userPre: User | null, type: string) {
+    if (type === "update" && userPre) {
+      let trxLog: trxLogs = new trxLogs();
+      trxLog.createdAt = new Date().toISOString();
+      trxLog.updatedAt = new Date().toISOString();
+      trxLog.trxType = "UpdateUser";
+      trxLog.module = "UsersWeb";
+      trxLog.userId = userNew.email;
+      trxLog.details = "createdAtNew:"+new Date()+",updatedAtNew:"+new Date()+",emailNew:"+userNew.email+",nameNew:"+userNew.name
+      +",lastNameNew:"+userNew.lastName+",secondLastNameNew:"+userNew.secondLastName+",roleNew:"+userNew.role+",statusNew:"+userNew.status
+      +
+      "createdAtPre:"+userPre.createdAt+",updatedAtPre:"+userPre.updatedAt+",emailPre:"+userPre.email+",namePre:"+userPre.name
+      +",lastNamePre:"+userPre.lastName+",secondLastNamePre:"+userPre.secondLastName+",rolePre:"+userPre.role+",statusPre:"+userPre.status;
+      trxLog.logLevel = "info";
+      await this.trxLogsRepository.create(trxLog);
+    } else if (type === "create") {
+      let trxLog: trxLogs = new trxLogs();
+      trxLog.createdAt = new Date().toISOString();
+      trxLog.updatedAt = new Date().toISOString();
+      trxLog.trxType = "CreateUser";
+      trxLog.module = "UsersWeb";
+      trxLog.userId = userNew.email;
+      trxLog.details = "createdAtNew:"+new Date()+",updatedAtNew:"+new Date()+",emailNew:"+userNew.email+",nameNew:"+userNew.name
+      +",lastNameNew:"+userNew.lastName+",secondLastNameNew:"+userNew.secondLastName+",roleNew:"+userNew.role+",statusNew:"+userNew.status;
+      trxLog.logLevel = "info";
+      await this.trxLogsRepository.create(trxLog);
+    } else if (type === "repeated email") {
+      let trxLog: trxLogs = new trxLogs();
+      trxLog.createdAt = new Date().toISOString();
+      trxLog.updatedAt = new Date().toISOString();
+      trxLog.trxType = "repeatedEmailUser";
+      trxLog.module = "UsersWeb";
+      trxLog.userId = userNew.email;
+      trxLog.details = "createdAt:"+userNew.createdAt+",updatedAt:"+userNew.updatedAt+",email:"+userNew.email+",name:"+userNew.name
+      +",lastName:"+userNew.lastName+",secondLastName:"+userNew.secondLastName+",role:"+userNew.role+",status:"+userNew.status;
+      trxLog.logLevel = "info";
+      await this.trxLogsRepository.create(trxLog);
+    }
   }
 }
