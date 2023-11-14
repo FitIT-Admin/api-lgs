@@ -29,8 +29,8 @@ import {
 
   UserServiceBindings
 } from '../keys';
-import {Role, trxLogs, User, UserCredentials} from '../models';
-import {AuditActionsRepository, AuditAuthenticationRepository, Credentials, RecoverPasswordRepository, UserRepository, RoleRepository, RegisterCredentials, UserCredentialsRepository, trxLogsRepository} from '../repositories';
+import {Company, Role, trxLogs, User, UserCredentials} from '../models';
+import {AuditActionsRepository, AuditAuthenticationRepository, Credentials, RecoverPasswordRepository, UserRepository, RoleRepository, RegisterCredentials, UserCredentialsRepository, trxLogsRepository, CompanyRepository} from '../repositories';
 import {EmailManager} from '../services/email.service';
 import {PasswordHasher} from '../services/hash.password.bcryptjs';
 import {registerAuditAction, registerAuditAuth} from '../services/validator';
@@ -52,6 +52,7 @@ export class UserController {
     @repository(RecoverPasswordRepository) public recoverPasswordRepository: RecoverPasswordRepository,
     @repository(trxLogsRepository) public trxLogsRepository: trxLogsRepository,
     @repository(UserRepository) public userRepository: UserRepository,
+    @repository(CompanyRepository) public companyRepository : CompanyRepository,
     @repository(AuditAuthenticationRepository) public auditAuthenticationRepository: AuditAuthenticationRepository,
     @repository(AuditActionsRepository) public auditActionsRepository: AuditActionsRepository,
     @repository(RoleRepository) public roleRepository: RoleRepository,
@@ -304,12 +305,34 @@ export class UserController {
   })
   //@authenticate('jwt')
   async regist(
-    //user: User,
     @requestBody(RegisterRequestBody) credentials: RegisterCredentials,
   ): Promise<any> {
     //try {
       const users = await this.userRepository.find( { where : { email : credentials.email }});
       if (users.length == 0) {
+        if (credentials.typeUser === "taller" && credentials.rut !== '' && credentials.billingType !== '') {
+          const companies: Company[] = await this.companyRepository.find({ where: {rut: credentials.rut}});
+          if (companies.length > 0) {
+            throw new HttpErrors.Conflict('El rut ya se encuentra registrado en el sistema, intente con otro rut');
+          } else {
+            const company: Company = new Company();
+            company.rut = credentials.rut;
+            company.billingType = credentials.billingType;
+            company.accountNumber = -1;
+            company.createBy = credentials.email;
+            company.accountType = '';
+            company.bank = '';
+            company.direction = '';
+            company.region = '';
+            company.commune = '';
+            company.make = [];
+            company.type = 'taller';
+            company.name = '';
+            company.phone = '';
+            company.status = 0;
+            await this.companyRepository.create(company);
+          }
+        }
         const previousCredentials = await this.userCredentialsRepository.find({where: {userId: credentials.email}});
         if (previousCredentials.length > 0) {
           await this.userCredentialsRepository.deleteById(previousCredentials[0].id);
@@ -344,7 +367,7 @@ export class UserController {
         // Crear credenciales de user
         userCredentials.userId = newUser.email;
         userCredentials.password = password;
-        var newUserCredentials = await this.userCredentialsRepository.create(userCredentials);
+        await this.userCredentialsRepository.create(userCredentials);
         // Registro de creacion de usuario y credenciales
         await this.auditActionsRepository.create(registerAuditAction(newUser.id, "Creacion de Usuario y credenciales"));
         await this.createTrxLog(user, null, 'create');
