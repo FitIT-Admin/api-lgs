@@ -34,10 +34,10 @@ export class Order extends TimestampEntity {
   })
   year: string;
 
-  @property({
+  /*@property({
     type: 'null',
   })
-  engine: string | null;
+  engine: string | null;*/
 
   @property({
     type: 'string',

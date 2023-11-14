@@ -23,6 +23,8 @@ export type RegisterCredentials = {
   lastName: string;
   typeUser: string;
   password: string;
+  billingType: string;
+  rut: string;
 };
 
 export class UserRepository extends DefaultCrudRepository<

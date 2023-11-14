@@ -43,20 +43,43 @@ import { OrderCompany } from '../interface/order-company.interface';
     })
     @authenticate('jwt')
     async create(
-    @requestBody({
-        content: {
-            'application/json': {
-            schema: getModelSchemaRef(Order, {
-                title: 'NewOrder',
-                exclude: ['id'],
-                }),
-            },
-        },
-    })
-    order: Omit<Order, 'id'>,
-    ): Promise<Order> {
-        //console.log(order);
-        return await this.orderRepository.create(order);
+        @requestBody() body: {order: Order, products: Product[], company: Company}
+    ): Promise<any> {
+        try {
+            const order: Order = await this.orderRepository.create(body.order);
+            if (body.company.status === 0) {
+                const companyTemp: Company[] = await this.companyRepository.find({where: {rut: body.company.rut}});
+                companyTemp[0].name = body.company.name;
+                companyTemp[0].billingType = body.company.billingType;
+                companyTemp[0].type = body.company.type;
+                companyTemp[0].direction = body.company.direction;
+                companyTemp[0].region = body.company.region;
+                companyTemp[0].commune = body.company.commune;
+                companyTemp[0].phone = body.company.phone;
+                companyTemp[0].accountNumber = body.company.accountNumber;
+                companyTemp[0].accountType = body.company.accountType;
+                companyTemp[0].bank = body.company.bank;
+                companyTemp[0].make = body.company.make;
+                companyTemp[0].status = 1;
+                await this.companyRepository.updateById(companyTemp[0].id, companyTemp[0]);
+            }
+            if (body.products.length > 0) {
+                for (let product of body.products) {
+                    const newProduct: Product = new Product();
+                    newProduct.idOrder = order.id;
+                    newProduct.title = product.description;
+                    newProduct.qty = product.qty;
+                    newProduct.originalQty = product.qty;
+                    newProduct.createBy = body.company.createBy;
+                    newProduct.company = body.company.rut;
+                    newProduct.status = 1;
+                    await this.productRepository.create(newProduct);
+                }
+            }
+        } catch(error) {
+            console.log(error);
+            throw new HttpErrors.ExpectationFailed('error');
+        }
     }
     @put('/order/update/{id}')
     @response(204, {
