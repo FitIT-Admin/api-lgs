@@ -362,7 +362,7 @@ export class UserController {
         user.secondLastName = secondLastName;
         user.role = credentials.typeUser;
         user.failedAttempts = 0;
-        user.status = (credentials.typeUser === 'taller' || credentials.typeUser === 'comercio') ? 0 : 1;
+        user.status = (credentials.typeUser === 'comercio') ? 0 : 1;
         var newUser = await this.userRepository.create(user);
         // Crear credenciales de user
         userCredentials.userId = newUser.email;
