@@ -24,7 +24,7 @@ export class Company extends TimestampEntity {
 
   @property({
     type: 'string',
-    required: true,
+    required: false,
   })
   name: string;
 
@@ -36,49 +36,49 @@ export class Company extends TimestampEntity {
 
   @property({
     type: 'string',
-    required: true,
+    required: false,
   })
   createBy: string;
 
   @property({
     type: 'string',
-    required: true,
+    required: false,
   })
   direction: string;
 
   @property({
     type: 'string',
-    required: true,
+    required: false,
   })
   region: string;
 
   @property({
     type: 'string',
-    required: true,
+    required: false,
   })
   commune: string;
 
   @property({
     type: 'string',
-    required: true,
+    required: false,
   })
   phone: string;
 
   @property({
     type: 'number',
-    required: true,
+    required: false,
   })
   accountNumber: number;
 
   @property({
     type: 'string',
-    required: true,
+    required: false,
   })
   accountType: string;
 
   @property({
     type: 'string',
-    required: true,
+    required: false,
   })
   bank: string;
 

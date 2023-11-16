@@ -114,7 +114,7 @@ export class RecoverPasswordController {
       const msg = {
         to: email, // Change to your recipient
         from: process.env.SENDGRID_SENDER_FROM, 
-        subject: 'Fit IT - Recuperación de contraseña',
+        subject: 'Planeta Tuercas - Recuperación de contraseña',
         html: this.emailManager.getHTMLPasswordRecovery(fullname, token)
       }
       sgMail
