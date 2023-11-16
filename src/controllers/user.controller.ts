@@ -342,16 +342,16 @@ export class UserController {
           credentials.password,
         );
         // separar apellidos
-        var lastNames = credentials.lastName.split(' ')
-        var lastName;
-        var secondLastName;
-        if (lastNames.length > 1) {
+        var lastNames: string[] = credentials.lastName.split(' ');
+        var lastName: string;
+        var secondLastName: string;
+        if (lastNames && lastNames.length > 1 && lastNames[1]) {
           lastName = lastNames[0];
           secondLastName = lastNames[1]
         }
         else {
-          lastName = credentials.lastName;
-          secondLastName = credentials.lastName;
+          lastName = lastNames[0];
+          secondLastName = lastNames[0];
         }
         // Crear user
         var user = new User;
