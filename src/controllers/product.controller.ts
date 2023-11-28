@@ -240,6 +240,7 @@ export class ProductController {
               }
             }
           }
+          data = data.slice(Number(skip), Number(limit) + Number(skip));
           return (data && data.length > 0) ? data : [];
         } catch(error) {
             throw new HttpErrors.ExpectationFailed('Error al buscar');
