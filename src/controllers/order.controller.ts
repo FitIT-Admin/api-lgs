@@ -64,6 +64,7 @@ import { OrderCompany } from '../interface/order-company.interface';
                 await this.companyRepository.updateById(companyTemp[0].id, companyTemp[0]);
             }
             if (body.products.length > 0) {
+                const products: Product[] = [];
                 for (let product of body.products) {
                     const newProduct: Product = new Product();
                     newProduct.idOrder = order.id;
@@ -73,7 +74,43 @@ import { OrderCompany } from '../interface/order-company.interface';
                     newProduct.createBy = body.company.createBy;
                     newProduct.company = body.company.rut;
                     newProduct.status = 1;
-                    await this.productRepository.create(newProduct);
+                    products.push(await this.productRepository.create(newProduct));
+                }
+                // Notificaciones Pedido Publicado
+                if (products && products.length > 0) {
+                    let commerceResult: any[] = [];
+                    const companyCollection = (this.companyRepository.dataSource.connector as any).collection("Company");
+                    if (companyCollection) {
+                        commerceResult = await companyCollection.aggregate([
+                            {
+                                '$match': {
+                                    'type': "comercio",
+                                    'make': {'$in': [order.brand]}
+                                  }
+                            }, {
+                                '$lookup': {
+                                    'from': 'User',
+                                    'localField': 'createBy',
+                                    'foreignField': 'email',
+                                    'as': 'user'
+                                }
+                            }, {
+                                '$addFields': {
+                                    'user': { '$first': "$user" }, 
+                                }
+                            }
+                        ]).get();
+                        if (commerceResult && commerceResult.length > 0) {
+                            for (let commerce of commerceResult) {
+                                var link: string = process.env.FRONTEND_URL+"/admin/orders/offers";
+                                for (let product of products) {
+                                    await this.createNotifications('Web', {email: commerce.createBy, rut: commerce.rut, phone: commerce.phone}, { email: '', rut: '', phone: ''}, 'Producto publicado', commerce.name+': Alguien necesita un '+product.title+' en Planeta Tuercas que podrías vender! Haz tu oferta Ya! en tu Mesón Virtual', link, 0, false);
+                                }
+                                await this.createNotifications('SMS', {email: commerce.createBy, rut: commerce.rut, phone: commerce.phone}, { email: '', rut: '', phone: ''}, 'Pedido publicado', commerce.name+': Alguien necesita un producto en Planeta Tuercas que podrías vender! Haz tu oferta Ya! en tu Mesón Virtual', link, 0, false);
+                                //await this.createNotifications('Mail', {email: commerce.createBy, rut: commerce.rut, phone: commerce.phone}, { email: '', rut: '', phone: ''}, 'Pedido publicado', commerce.name+': Alguien necesita un producto en Planeta Tuercas que podrías vender! Haz tu oferta Ya! en tu Mesón Virtual', link, 0, false);
+                            }
+                        }
+                    }
                 }
             }
         } catch(error) {
