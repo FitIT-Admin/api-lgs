@@ -300,7 +300,7 @@ import { OfferWithData } from '../interface/offer-with-data.interface';
                         const update: {} = { status: 4, confirmedAtClaimant: new Date(), photoPaymentReceiptAtClaimant: photoPath.photo };
 
                         // Ofertas adjudicadas -> Pagadas
-                        console.log(await this.offerRepository.updateAll(update, filter));
+                        await this.offerRepository.updateAll(update, filter);
                       }
                     }
                   }
