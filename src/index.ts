@@ -10,7 +10,8 @@ export async function main(options: ApplicationConfig = {}) {
 
   const url = app.restServer.url;
   console.log(`Server is running at ${url}`);
-  console.log(`Try ${url}/ping`);
+  let dat = new Date();
+  console.log(`Try ${url}/ping -> `+dat.getDate()+'-'+String(dat.getMonth()+1).padStart(2, '0')+'-'+dat.getFullYear()+' '+dat.getHours()+':'+dat.getMinutes()+':'+dat.getSeconds());
 
   return app;
 }
