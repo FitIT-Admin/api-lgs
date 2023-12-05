@@ -469,7 +469,9 @@ export class ProductController {
                 }
               }, 
               {
-                '$sort': { 'offerCount': 1 }
+                '$sort': { 
+                  'createdAt': 1,
+                }
               },
               {
                 '$skip': skip
