@@ -74,6 +74,36 @@ export class Order extends TimestampEntity {
   })
   closingDate?: Date;
 
+  @property({
+    type: 'string',
+  })
+  delivery?: string;
+
+  @property({
+    type: 'string',
+  })
+  region?: string;
+
+  @property({
+    type: 'string',
+  })
+  commune?: string;
+
+  @property({
+    type: 'string',
+  })
+  avenue?: string;
+
+  @property({
+    type: 'string',
+  })
+  recipientName?: string;
+
+  @property({
+    type: 'string',
+  })
+  recipientLastName?: string;
+
   // Define well-known properties here
 
   // Indexer property to allow additional data

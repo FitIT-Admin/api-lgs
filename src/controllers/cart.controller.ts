@@ -40,7 +40,7 @@ import { OfferWithData } from '../interface/offer-with-data.interface';
       @repository(OrderRepository) public orderRepository: OrderRepository,
       @repository(OfferRepository) public offerRepository: OfferRepository,
     ) {}
-
+    
     @get('/cart/orders/{email}', {
         responses: {
           '200': {
@@ -118,6 +118,62 @@ import { OfferWithData } from '../interface/offer-with-data.interface';
                 }
                 return (orderOffers && orderOffers.length > 0) ? orderOffers : [];
 
+            } catch(error) {
+                console.log(error);
+                throw new HttpErrors.ExpectationFailed('Error al buscar por id');
+            }
+      }
+      @get('/cart/order/{id}', {
+        responses: {
+          '200': {
+            description: 'Offer model instance',
+            content: {
+              'application/json': {
+                schema: getModelSchemaRef(Offer, {includeRelations: true}),
+              },
+            },
+          },
+        },
+      })
+      @authenticate('jwt')
+      async findOrder(
+        @param.path.string('id') id: string
+        ): Promise<any[]> {
+            try {
+              let offerResult: any[] = [];
+                const offerCollection = await (this.offerRepository.dataSource.connector as any).collection("Offer");
+                if (offerCollection) {
+                  offerResult = await offerCollection.aggregate([
+                      {
+                        '$match': {
+                          'idOrder': new ObjectId(id),
+                          'status': 3
+                        }
+                      }, {
+                        '$lookup': {
+                          'from': 'Product',
+                          'localField': 'idProduct',
+                          'foreignField': '_id',
+                          'as': 'product'
+                        }
+                      }, {
+                        '$lookup': {
+                          'from': 'Order',
+                          'localField': 'idOrder',
+                          'foreignField': '_id',
+                          'as': 'order'
+                        }
+                      }, {
+                        '$addFields': {
+                          'product': { '$first': "$product" }, 
+                          'order': { '$first': "$order" },
+                        }
+                      }, {
+                        '$sort': { _id: -1 }
+                      }
+                    ]).get();
+                }
+                return (offerResult && offerResult.length > 0) ? offerResult : [];
             } catch(error) {
                 console.log(error);
                 throw new HttpErrors.ExpectationFailed('Error al buscar por id');
@@ -249,11 +305,18 @@ import { OfferWithData } from '../interface/offer-with-data.interface';
       @authenticate('jwt')
       async payOffers(
         @param.path.string('id') id: string,
-        @requestBody() photoPath: {photo: string}
+        @requestBody() parameters: {delivery: string, region: string, commune: string, avenue: string, recipientName: string, recipientLastName: string, photo: string}
       ): Promise<void> {
             try {
                 const orders: Order[] = await this.orderRepository.find({where: { idOrder: id}});
                 if (orders && orders.length > 0) {
+                  orders[0].delivery = parameters.delivery;
+                  orders[0].region = parameters.region;
+                  orders[0].commune = parameters.commune;
+                  orders[0].avenue = parameters.avenue;
+                  orders[0].recipientName = parameters.recipientName;
+                  orders[0].recipientLastName = parameters.recipientLastName;
+                  await this.orderRepository.updateById(orders[0].id, orders[0]);
                   const products: Product[] = await this.productRepository.find({ where: { status: { inq: [2, 3] }, idOrder: new ObjectId(orders[0].id) } });
                   const users: User[] = await this.userRepository.find({ where: { status: 1, role: 'administrador'}});
                   if (products && products.length > 0) {
@@ -297,7 +360,7 @@ import { OfferWithData } from '../interface/offer-with-data.interface';
                         };
 
                         // Definir el nuevo valor para el campo que se actualizará
-                        const update: {} = { status: 4, confirmedAtClaimant: new Date(), photoPaymentReceiptAtClaimant: photoPath.photo };
+                        const update: {} = { status: 4, confirmedAtClaimant: new Date(), photoPaymentReceiptAtClaimant: parameters.photo };
 
                         // Ofertas adjudicadas -> Pagadas
                         await this.offerRepository.updateAll(update, filter);
