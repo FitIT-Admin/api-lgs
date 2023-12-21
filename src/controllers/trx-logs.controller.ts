@@ -462,7 +462,7 @@ export class trxLogsController {
         $limit: Number(limit)
       },
       {
-        $sort: { createdAt: 1 }
+        $sort: { createdAt: -1 }
       }
     ];
     //console.log(JSON.stringify(query));
