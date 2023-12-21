@@ -103,7 +103,7 @@ import { Offer, trxLogs, User } from '../models';
         @param.path.string('email') email: string
     ): Promise<Company[]> {
       try {
-        const companies: Company[] = await this.companyRepository.find({where: {createBy: email, status: {$ne: -1}}});
+        const companies: Company[] = await this.companyRepository.find({where: {createBy: email, status: {$nin: [-1,2]}}});
         return (companies && companies.length > 0) ? companies : [];
       } catch(error) {
         console.log(error);
@@ -224,6 +224,7 @@ import { Offer, trxLogs, User } from '../models';
         companyTemp.direction = company.direction;
         companyTemp.region = company.region;
         companyTemp.commune = company.commune;
+        companyTemp.status = (company.status) ? company.status : 1;
         companyTemp.phone = company.phone;
         companyTemp.accountNumber = company.accountNumber;
         companyTemp.accountType = company.accountType;
@@ -247,6 +248,7 @@ import { Offer, trxLogs, User } from '../models';
           companyTemp.region = company.region;
           companyTemp.commune = company.commune;
           companyTemp.phone = company.phone;
+          companyTemp.status = (company.status) ? company.status : 1;
           companyTemp.accountNumber = company.accountNumber;
           companyTemp.accountType = company.accountType;
           companyTemp.bank = company.bank;
@@ -276,6 +278,61 @@ import { Offer, trxLogs, User } from '../models';
         await this.companyRepository.updateById(companyTemp.id, companyTemp);
         console.log("Delete Company: "+companyTemp.rut+", "+companyTemp.name);
       }
+    }
+    @post('/company/skip/{skip}/limit/{limit}')
+    @response(200, {
+        description: 'Company model instance'
+    })
+    @authenticate('jwt')
+    async findCompanies(
+      @param.path.string('skip') skip: string,
+      @param.path.string('limit') limit: string,
+      @requestBody() parameters: { rut: string, name: string, status: string, type: string }
+    ): Promise<Company[]> {
+      let companies: Company[] = [];
+      const query = [
+        {
+          $match: {
+            $and: [
+              (parameters.rut !== '') ? { rut: { $regex: ".*"+parameters.rut+".*", $options: 'i' } } : {},
+              (parameters.name !== '') ? { name: { $regex: ".*"+parameters.name+".*", $options: 'i' } } : {},
+              (parameters.status !== '') ? { status: Number(parameters.status) } : {},
+              (parameters.type !== '') ? { type: parameters.type } : {},
+            ]
+          }
+        },
+        {
+          $skip: Number(skip)
+        },
+        {
+          $limit: Number(limit)
+        },
+        {
+          $sort: { createdAt: -1 }
+        }
+      ];
+      //console.log(JSON.stringify(query));
+      const companyCollection = (this.companyRepository.dataSource.connector as any).collection("Company");
+      companies = await companyCollection.aggregate(query).get();
+      return (companies && companies.length > 0) ? companies : [];
+    }
+    @post('/company/count')
+    @response(200, {
+        description: 'Company model instance'
+    })
+    @authenticate('jwt')
+    async countCompanies(
+      @requestBody() parameters: { rut: string, name: string, status: string, type: string }
+    ): Promise<{count: number}> {
+      const count: {count: number} = await this.companyRepository.count({
+        and: [
+          (parameters.rut !== '') ? { rut: { $regex: ".*"+parameters.rut+".*", $options: 'i' } } : {},
+          (parameters.name !== '') ? { name: { $regex: ".*"+parameters.name+".*", $options: 'i' } } : {},
+          (parameters.status !== '') ? { status: Number(parameters.status) } : {},
+          (parameters.type !== '') ? { type: parameters.type } : {},
+        ]
+      });
+      return (count) ? count : {count: 0};
     }
     private async createTrxLog(companyNew: Company, companyPre: Company | null, type: string) {
       if (type === "update" && companyPre) {
