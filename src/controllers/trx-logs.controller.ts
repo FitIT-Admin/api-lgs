@@ -396,7 +396,7 @@ export class trxLogsController {
   async countWithFilter(
     @requestBody() parameters: { name: string, module: string, trxType: string, details: string, dateLogStart: string, dateLogEnd: string },
   ): Promise<{count: number}>{
-    console.log(parameters);
+    //console.log(parameters);
     /*let logs: trxLogs[] = [];
     const query = [
       {
@@ -425,7 +425,7 @@ export class trxLogsController {
         }
       ]
     });
-    console.log(count);
+    //console.log(count);
     return (count) ? count : {count: 0};
   }
 
